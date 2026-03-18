@@ -2,7 +2,7 @@ namespace CleanBrilliant.DTO
 {
     public class CoefficientDTO
     {
-        public string ShippingMethod { get; init; } = "";
-        public float CoefficientValue { get; init; }
+        public string ShippingMethod { get; set; } = "";
+        public float CoefficientValue { get; set; }
     }
 }
