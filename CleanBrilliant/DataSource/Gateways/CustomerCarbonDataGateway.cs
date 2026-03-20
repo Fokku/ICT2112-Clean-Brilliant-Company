@@ -40,10 +40,10 @@ namespace CleanBrilliant.Data.Gateways
 
             var ds = new DataSet();
 
-            var conn = new NpgsqlConnection(_connString);
+            await using var conn = new NpgsqlConnection(_connString);
             await conn.OpenAsync();
 
-            var cmd = new NpgsqlCommand(sql, conn);
+            await using var cmd = new NpgsqlCommand(sql, conn);
             cmd.Parameters.AddWithValue("orderID", orderID);
 
             using var adapter = new NpgsqlDataAdapter(cmd);
@@ -61,10 +61,10 @@ namespace CleanBrilliant.Data.Gateways
 
             var ds = new DataSet();
 
-            var conn = new NpgsqlConnection(_connString);
+            await using var conn = new NpgsqlConnection(_connString);
             await conn.OpenAsync();
 
-            var cmd = new NpgsqlCommand(sql, conn);
+            await using var cmd = new NpgsqlCommand(sql, conn);
 
             using var adapter = new NpgsqlDataAdapter(cmd);
             adapter.Fill(ds, "customer_carbon_data");
