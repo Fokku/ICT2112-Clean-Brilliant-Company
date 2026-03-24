@@ -8,7 +8,7 @@ namespace CleanBrilliant.Controllers
     {
         public IActionResult Index()
         {
-            return RedirectToAction("Index", "Dashboard");
+            return View();
         }
 
         public IActionResult Privacy()
