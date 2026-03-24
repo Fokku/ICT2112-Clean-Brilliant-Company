@@ -1,0 +1,17 @@
+@{
+    var startDate = (DateOnly?)ViewBag.StartDate;
+    var endDate = (DateOnly?)ViewBag.EndDate;
+    var currentLayoutId = (int?)ViewBag.CurrentLayoutId;
+}
+
+<form asp-controller="Dashboard" asp-action="Index" method="get" class="d-flex align-items-center border p-2 rounded bg-light">
+    <label class="me-2 fw-bold small">Date Range:</label>
+    <input type="date" class="form-control form-control-sm me-2" name="startDate" value="@startDate?.ToString("yyyy-MM-dd")" />
+    <span class="me-2">-</span>
+    <input type="date" class="form-control form-control-sm" name="endDate" value="@endDate?.ToString("yyyy-MM-dd")" />
+    @if (currentLayoutId.HasValue)
+    {
+        <input type="hidden" name="layoutId" value="@currentLayoutId.Value" />
+    }
+    <button type="submit" class="btn btn-sm btn-secondary ms-2">Apply</button>
+</form>

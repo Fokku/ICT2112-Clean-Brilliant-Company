@@ -1,6 +1,7 @@
 using CleanBrilliant.Data.Gateways;
 using CleanBrilliant.Domain.BoundaryInterface;
 using CleanBrilliant.Domain.Control;
+using CleanBrilliant.Services;
 using Microsoft.EntityFrameworkCore;
 using CleanBrilliantProject.Data.DbCon;
 using Npgsql;
@@ -18,6 +19,13 @@ builder.Services.AddScoped<ProductManager>();
 builder.Services.AddScoped<ICategoryGateway, CategoryGateway>();
 builder.Services.AddScoped<IProductGateway, ProductGateway>();
 
+// Dashboard services
+builder.Services.AddScoped<DashboardLayoutGateway>();
+builder.Services.AddScoped<DashboardLayoutSerializer>();
+builder.Services.AddScoped<DashboardLayoutControl>();
+builder.Services.AddScoped<IWidgetBuilder, WidgetBuilder>();
+builder.Services.AddScoped<IAggregatedData, Co2AnalyticsControl>();
+builder.Services.AddScoped<WidgetControl>();
 
 // Add services to the container.
 builder.Services.AddControllersWithViews();

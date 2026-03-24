@@ -1,4 +1,4 @@
-namespace Module3.Models
+namespace CleanBrilliant.Models
 {
     // Updated to handle specific sizes
     public enum WidgetType { STAT, LINE, BAR_2X2, BAR_4X2, PIE_2X2 }

@@ -1,4 +1,4 @@
-namespace Module3.Models
+namespace CleanBrilliant.Models
 {
     public class PreShipmentCarbonDataDTO
     {

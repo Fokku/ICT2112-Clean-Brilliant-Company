@@ -1,0 +1,106 @@
+@model CleanBrilliant.Models.DashboardLayout
+@using CleanBrilliant.Services
+@using System.Text.Json
+@{
+    var widgetControl = ViewBag.WidgetControl as WidgetControl;
+    var startDate = (DateOnly?)ViewBag.StartDate ?? DateOnly.FromDateTime(DateTime.Today.AddDays(-4));
+    var endDate = (DateOnly?)ViewBag.EndDate ?? DateOnly.FromDateTime(DateTime.Today);
+}
+
+<div class="row" id="sortable-grid">
+    @foreach (var placement in Model.Placements)
+    {
+        var dataPoints = widgetControl.GetGraphData(placement.Widget, startDate, endDate);
+        var labels = JsonSerializer.Serialize(dataPoints.Select(d => d.Date));
+        var values = JsonSerializer.Serialize(dataPoints.Select(d => d.Value));
+        
+        <div class="col-md-@placement.Widget.DefaultWidth mb-3 widget-card-wrapper" data-placement-id="@placement.PlacementId" style="cursor: grab;">
+            <div class="card shadow-sm h-100">
+                <div class="card-header bg-dark text-white d-flex justify-content-between align-items-center">
+                    <span>
+                        <i class="bi bi-grip-vertical me-2"></i> 
+                        @placement.Widget.WidgetTitle
+                        @if (placement.Widget.Type != CleanBrilliant.Models.WidgetType.STAT)
+                        {
+                            <text> (Threshold: @placement.Widget.ThresholdValue)</text>
+                        }
+                    </span>
+                    
+                    <form asp-controller="Dashboard" asp-action="RemoveWidget" method="post" class="m-0 p-0">
+                        <input type="hidden" name="layoutId" value="@Model.LayoutId" />
+                        <input type="hidden" name="placementId" value="@placement.PlacementId" />
+                        <button type="submit" class="btn btn-sm btn-danger py-0 px-2">X</button>
+                    </form>
+                </div>
+                <div class="card-body">
+                    @if(placement.Widget.Type == CleanBrilliant.Models.WidgetType.STAT) {
+                        var statValues = dataPoints.Select(d => d.Value).ToList();
+                        double statValue = statValues.Count == 0
+                            ? 0
+                            : placement.Widget.Aggregation switch
+                            {
+                                CleanBrilliant.Models.AggregationType.SUM => statValues.Sum(),
+                                CleanBrilliant.Models.AggregationType.AVG => statValues.Average(),
+                                CleanBrilliant.Models.AggregationType.MIN => statValues.Min(),
+                                CleanBrilliant.Models.AggregationType.MAX => statValues.Max(),
+                                _ => statValues.LastOrDefault()
+                            };
+
+                        <h1 class="text-primary text-center mt-4">@statValue.ToString("0.##") kg</h1>
+                    }
+                    else {
+                        <canvas id="chart-@placement.PlacementId"></canvas>
+                        <script>
+                            document.addEventListener("DOMContentLoaded", function() {
+                                var ctx = document.getElementById('chart-@placement.PlacementId').getContext('2d');
+                                var values = @Html.Raw(values);
+                                var colors = values.map(v => v > @placement.Widget.ThresholdValue ? 'rgba(255, 99, 132, 0.7)' : 'rgba(75, 192, 192, 0.7)');
+                                var chartType = '@placement.Widget.Type.ToString()' === 'PIE_2X2' ? 'pie' : 'bar';
+
+                                new Chart(ctx, {
+                                    type: chartType,
+                                    data: { labels: @Html.Raw(labels), datasets:[{ label: 'CO2', data: values, backgroundColor: colors, borderWidth: 1 }] },
+                                    options: { responsive: true, maintainAspectRatio: false, animation: false }
+                                });
+                            });
+                        </script>
+                    }
+                </div>
+            </div>
+        </div>
+    }
+</div>
+
+<!-- JSON BLOB VIEWER -->
+<hr class="mt-5"/>
+<h4>Database JSON Blob Simulator</h4>
+<div class="bg-light p-3 border rounded" style="max-height: 300px; overflow-y: auto;">
+    <pre><code>@ViewBag.RawJson</code></pre>
+</div>
+
+<!-- Drag and Drop AJAX Script -->
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        var el = document.getElementById('sortable-grid');
+        if(el) {
+            Sortable.create(el, {
+                animation: 150,
+                ghostClass: 'bg-light',
+                onEnd: function (evt) {
+                    var items = el.querySelectorAll('.widget-card-wrapper');
+                    var orderedIds = Array.from(items).map(item => parseInt(item.getAttribute('data-placement-id')));
+
+                    fetch('@Url.Action("ReorderWidgets", "Dashboard")', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ LayoutId: @Model.LayoutId, PlacementIds: orderedIds })
+                    }).then(response => {
+                        if(!response.ok) {
+                            console.error('Failed to save widget order.');
+                        }
+                    });
+                }
+            });
+        }
+    });
+</script>

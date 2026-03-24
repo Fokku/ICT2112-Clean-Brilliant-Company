@@ -1,0 +1,49 @@
+@model CleanBrilliant.Models.DashboardLayout
+@using CleanBrilliant.Services
+@{
+    ViewData["Title"] = "CO2 Dashboard";
+    var layouts = ViewBag.AllLayouts as List<CleanBrilliant.Models.DashboardLayout>;
+}
+
+<!-- External Libraries -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
+
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2>Dashboard Customization</h2>
+
+        <div class="d-flex gap-3">
+            <partial name="~/Views/Home/_DatePicker.cshtml" />
+            <partial name="~/Views/Home/_CoefficientView.cshtml" />
+        </div>
+    </div>
+
+    <ul class="nav nav-tabs mb-3">
+        @if (layouts != null)
+        {
+            foreach (var layout in layouts)
+            {
+                <li class="nav-item">
+                    <a class="nav-link @(layout.LayoutId == Model.LayoutId ? "active" : "")"
+                       href="@Url.Action("Index", "Dashboard", new { layoutId = layout.LayoutId })">
+                        @layout.LayoutName
+                    </a>
+                </li>
+            }
+        }
+        <li class="nav-item ms-2">
+            <button class="btn btn-sm btn-outline-success mt-1" data-bs-toggle="modal" data-bs-target="#newLayoutModal">
+                + New Layout
+            </button>
+        </li>
+    </ul>
+
+    <button class="btn btn-primary mb-4" data-bs-toggle="modal" data-bs-target="#widgetConfigModal">
+        + Add Widget
+    </button>
+
+    <partial name="~/Views/Home/_DashboardGrid.cshtml" model="Model" />
+    <partial name="~/Views/Home/_WidgetConfigModal.cshtml" model="Model.LayoutId" />
+    <partial name="~/Views/Home/_NewLayoutModal.cshtml" />
+</div>

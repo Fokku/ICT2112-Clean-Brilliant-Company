@@ -1,0 +1,102 @@
+@model int 
+@using CleanBrilliant.Models
+
+<div class="modal fade" id="widgetConfigModal" tabindex="-1">
+    <div class="modal-dialog">
+        <form asp-controller="Dashboard" asp-action="AddWidget" method="post" class="modal-content">
+            <input type="hidden" name="layoutId" value="@Model" />
+            <div class="modal-header"><h5 class="modal-title">Configure Widget</h5></div>
+            <div class="modal-body">
+                <div class="mb-2" id="titleInputDiv"><label>Title</label><input id="titleInput" type="text" name="title" class="form-control" required /></div>
+                <div class="mb-2" id="typeInputDiv">
+                    <label>Type</label>
+                    <select id="widgetTypeSelect" name="type" class="form-control">
+                        @foreach (var type in Enum.GetValues<WidgetType>())
+                        {
+                            <option value="@type">@type.ToString().Replace("_", " ")</option>
+                        }
+                    </select>
+                </div>
+                <div class="mb-2" id="componentInputDiv">
+                    <label>Component</label>
+                    <select id="componentSelect" name="comp" class="form-control">
+                        @foreach (var comp in Enum.GetValues<ComponentType>())
+                        {
+                            <option value="@comp">@comp</option>
+                        }
+                    </select>
+                </div>
+                <div class="mb-2" id="aggregationInputDiv">
+                    <label>Aggregation</label>
+                    <select id="aggSelect" name="agg" class="form-control">
+                        @foreach (var agg in Enum.GetValues<AggregationType>())
+                        {
+                            <option value="@agg">@agg</option>
+                        }
+                    </select>
+                </div>
+                <div class="mb-2" id="thresholdInputDiv">
+                    <label>Threshold (Red if over)</label>
+                    <input id="thresholdInput" type="number" name="threshold" class="form-control" value="50" required />
+                </div>
+            </div>
+            <div class="modal-footer"><button type="submit" class="btn btn-primary">Add Widget</button></div>
+        </form>
+    </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const widgetTypeDropdown = document.getElementById('widgetTypeSelect');
+
+        // Add new widget type rules here as new widget types are introduced.
+        const widgetFieldRules = {
+            DEFAULT: {
+                show: ['componentInputDiv', 'aggregationInputDiv', 'thresholdInputDiv'],
+                required: ['componentSelect', 'aggSelect', 'thresholdInput']
+            },
+            STAT: {
+                show: ['componentInputDiv', 'aggregationInputDiv'],
+                required: ['componentSelect', 'aggSelect']
+            }
+        };
+
+        const allDynamicFieldDivIds = ['componentInputDiv', 'aggregationInputDiv', 'thresholdInputDiv'];
+        const allDynamicInputIds = ['componentSelect', 'aggSelect', 'thresholdInput'];
+
+        function applyWidgetTypeRules(widgetType) {
+            const activeRules = widgetFieldRules[widgetType] || widgetFieldRules.DEFAULT;
+
+            allDynamicFieldDivIds.forEach(function (fieldDivId) {
+                const fieldDiv = document.getElementById(fieldDivId);
+                const input = fieldDiv ? fieldDiv.querySelector('input, select, textarea') : null;
+                const isVisible = activeRules.show.includes(fieldDivId);
+
+                if (fieldDiv) {
+                    fieldDiv.style.display = isVisible ? 'block' : 'none';
+                }
+                if (input) {
+                    input.disabled = !isVisible;
+                }
+            });
+
+            allDynamicInputIds.forEach(function (inputId) {
+                const input = document.getElementById(inputId);
+                if (!input) {
+                    return;
+                }
+
+                input.required = activeRules.required.includes(inputId);
+            });
+        }
+
+        if (!widgetTypeDropdown) {
+            return;
+        }
+
+        applyWidgetTypeRules(widgetTypeDropdown.value);
+        widgetTypeDropdown.addEventListener('change', function () {
+            applyWidgetTypeRules(this.value);
+        });
+    });
+</script>
