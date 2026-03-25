@@ -1,6 +1,6 @@
 using CleanBrilliant.Models;
 
-namespace CleanBrilliant.Services
+namespace CleanBrilliant.Interfaces
 {
     public interface IAggregatedData
     {

@@ -1,4 +1,5 @@
 using CleanBrilliant.Data.Gateways;
+using CleanBrilliant.Interfaces;
 using CleanBrilliant.Services;
 using Microsoft.EntityFrameworkCore;
 using CleanBrilliantProject.Data.DbCon;
@@ -12,7 +13,7 @@ builder.Services.AddDbContext<AppDbContext>(options =>
     ));
 
 // Dashboard services
-builder.Services.AddScoped<DashboardLayoutGateway>();
+builder.Services.AddScoped<IDashboardLayoutGateway, DashboardLayoutGateway>();
 builder.Services.AddScoped<DashboardLayoutSerializer>();
 builder.Services.AddScoped<DashboardLayoutControl>();
 builder.Services.AddScoped<IWidgetBuilder, WidgetBuilder>();
@@ -48,5 +49,10 @@ app.MapControllerRoute(
     pattern: "{controller=Home}/{action=Index}/{id?}")
     .WithStaticAssets();
 
+await using (var scope = app.Services.CreateAsyncScope())
+{
+    var dashboardLayoutControl = scope.ServiceProvider.GetRequiredService<DashboardLayoutControl>();
+    await dashboardLayoutControl.EnsureDefaultLayoutExists();
+}
 
 app.Run();

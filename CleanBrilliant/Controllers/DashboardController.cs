@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Mvc;
 using CleanBrilliant.Models;
 using CleanBrilliant.Services;
 using Microsoft.AspNetCore.Http;
+using System.Text.Json;
 
 namespace CleanBrilliant.Controllers
 {
@@ -17,14 +18,13 @@ namespace CleanBrilliant.Controllers
         {
             _layoutControl = layoutControl;
             _widgetControl = widgetControl;
-            _layoutControl.EnsureDefaultLayoutExists(); // Make sure we have 1 layout on startup
         }
 
         [HttpGet("/dashboard")]
-        public IActionResult Index(int? layoutId, DateOnly? startDate, DateOnly? endDate)
+        public async Task<IActionResult> Index(int? layoutId, DateOnly? startDate, DateOnly? endDate)
         {
             // Now we ask the Control to get the layouts, instead of the Repo
-            var layouts = _layoutControl.GetAllLayouts();
+            var layouts = await _layoutControl.GetAllLayouts();
             var currentLayout = layoutId.HasValue ? layouts.FirstOrDefault(l => l.LayoutId == layoutId) : layouts.FirstOrDefault();
             if (currentLayout == null)
             {
@@ -63,21 +63,21 @@ namespace CleanBrilliant.Controllers
             ViewBag.CurrentLayoutId = currentLayout.LayoutId;
             ViewBag.StartDate = resolvedStartDate;
             ViewBag.EndDate = resolvedEndDate;
-            ViewBag.WidgetControl = _widgetControl; 
-            ViewBag.RawJson = _layoutControl.GetRawJson(currentLayout.LayoutId); 
+            ViewBag.WidgetControl = _widgetControl;
+            ViewBag.RawJson = JsonSerializer.Serialize(currentLayout.Placements);
 
             return View(currentLayout);
         }
 
         [HttpPost]
-        public IActionResult CreateLayout(string layoutName)
+        public async Task<IActionResult> CreateLayout(string layoutName)
         {
-            _layoutControl.CreateNewLayout(layoutName);
+            await _layoutControl.CreateNewLayout(layoutName);
             return RedirectToAction("Index", "Dashboard");
         }
 
         [HttpPost]
-        public IActionResult AddWidget(int layoutId, string title, WidgetType type, AggregationType? agg, ComponentType comp, double? threshold, DateOnly? startDate, DateOnly? endDate)
+        public async Task<IActionResult> AddWidget(int layoutId, string title, WidgetType type, AggregationType? agg, ComponentType comp, double? threshold, DateOnly? startDate, DateOnly? endDate)
         {
             int newWidgetId = new Random().Next(1000, 9999);
             Widget newWidget;
@@ -94,14 +94,14 @@ namespace CleanBrilliant.Controllers
                 newWidget = _widgetControl.CreateChartWidget(newWidgetId, title, type, resolvedAgg, comp, resolvedThreshold);
             }
             
-            _layoutControl.AddWidgetToLayout(layoutId, newWidget);
+            await _layoutControl.AddWidgetToLayout(layoutId, newWidget);
             return RedirectToAction("Index", "Dashboard", new { layoutId = layoutId, startDate = startDate, endDate = endDate });
         }
 
         [HttpPost]
-        public IActionResult RemoveWidget(int layoutId, int placementId, DateOnly? startDate, DateOnly? endDate)
+        public async Task<IActionResult> RemoveWidget(int layoutId, int placementId, DateOnly? startDate, DateOnly? endDate)
         {
-            _layoutControl.RemoveWidgetFromLayout(layoutId, placementId);
+            await _layoutControl.RemoveWidgetFromLayout(layoutId, placementId);
             return RedirectToAction("Index", "Dashboard", new { layoutId = layoutId, startDate = startDate, endDate = endDate });
         }
 
@@ -112,10 +112,23 @@ namespace CleanBrilliant.Controllers
         }
 
         [HttpPost]
-        public IActionResult ReorderWidgets([FromBody] ReorderRequest req)
+        public async Task<IActionResult> ReorderWidgets([FromBody] ReorderRequest req)
         {
-            _layoutControl.ReorderAndPackWidgets(req.LayoutId, req.PlacementIds);
+            await _layoutControl.ReorderAndPackWidgets(req.LayoutId, req.PlacementIds);
             return Ok(); // Tells the frontend the save was successful
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> DeleteLayout(int layoutId, DateOnly? startDate, DateOnly? endDate)
+        {
+            bool deleted = await _layoutControl.DeleteLayout(layoutId);
+            if (!deleted)
+            {
+                TempData["ErrorMessage"] = "Cannot delete the default layout or layout not found.";
+            }
+
+            // Redirect to default layout after deletion
+            return RedirectToAction("Index", "Dashboard", new { layoutId = (int?)null, startDate = startDate, endDate = endDate });
         }
     }
 }

@@ -1,7 +1,7 @@
 using System.Globalization;
 using CleanBrilliant.Models;
 
-namespace CleanBrilliant.Services
+namespace CleanBrilliant.Interfaces
 {
     public interface IPreShipmentCarbonReader
     {
