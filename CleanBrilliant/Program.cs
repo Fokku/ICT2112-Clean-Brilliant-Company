@@ -19,6 +19,7 @@ builder.Services.AddScoped<DashboardLayoutControl>();
 builder.Services.AddScoped<IWidgetBuilder, WidgetBuilder>();
 builder.Services.AddScoped<IAggregatedData, Co2AnalyticsControl>();
 builder.Services.AddScoped<WidgetControl>();
+builder.Services.AddScoped<CoefficientControl>();
 
 // Add services to the container.
 builder.Services.AddControllersWithViews();

@@ -13,11 +13,16 @@ namespace CleanBrilliant.Controllers
 
         private readonly DashboardLayoutControl _layoutControl;
         private readonly WidgetControl _widgetControl;
+        private readonly CoefficientControl _coefficientControl;
 
-        public DashboardController(DashboardLayoutControl layoutControl, WidgetControl widgetControl)
+        public DashboardController(
+            DashboardLayoutControl layoutControl, 
+            WidgetControl widgetControl,
+            CoefficientControl coefficientControl)
         {
             _layoutControl = layoutControl;
             _widgetControl = widgetControl;
+            _coefficientControl = coefficientControl;
         }
 
         [HttpGet("/dashboard")]
@@ -65,10 +70,28 @@ namespace CleanBrilliant.Controllers
             ViewBag.EndDate = resolvedEndDate;
             ViewBag.WidgetControl = _widgetControl;
             ViewBag.RawJson = JsonSerializer.Serialize(currentLayout.Placements);
+            ViewBag.Coefficients = _coefficientControl.getAll();
 
             return View(currentLayout);
         }
 
+        [HttpPost]
+        public IActionResult UpdateCoefficient(string name, float emission)
+        {
+            try
+            {
+                _coefficientControl.updateEmission(name, emission);
+                return Ok();
+            }
+            catch (ArgumentException ex)
+            {
+                return BadRequest(ex.Message);
+            }
+            catch (Exception)
+            {
+                return StatusCode(500, "Unexpected error occurred.");
+            }
+        }
         [HttpPost]
         public async Task<IActionResult> CreateLayout(string layoutName)
         {
