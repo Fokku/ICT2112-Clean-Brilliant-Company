@@ -1,5 +1,4 @@
 using System;
-
 namespace CleanBrilliant.DTO
 {
     public class PreShipmentCarbonDataDTO
@@ -11,5 +10,25 @@ namespace CleanBrilliant.DTO
         public float PackagingCF { get; set; }
 
         public float TotalCF => ProductCF + StorageCF + PackagingCF;
+
+        // Compatibility aliases for the module-3 naming model.
+        public float ManufacturingCarbon
+        {
+            get => ProductCF;
+            set => ProductCF = value;
+        }
+
+        public float PackagingCarbon
+        {
+            get => PackagingCF;
+            set => PackagingCF = value;
+        }
+
+        private float? _totalPreShipmentCarbon;
+        public float TotalPreShipmentCarbon
+        {
+            get => _totalPreShipmentCarbon ?? TotalCF;
+            set => _totalPreShipmentCarbon = value;
+        }
     }
 }

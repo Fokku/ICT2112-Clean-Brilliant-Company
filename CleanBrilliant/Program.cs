@@ -1,3 +1,9 @@
+using CleanBrilliant.Data.Gateways;
+using CleanBrilliant.Domain.BoundaryInterface;
+using CleanBrilliant.Domain.Control;
+using CleanBrilliant.Domain.DomainInterface;
+using CleanBrilliant.Boundary;
+using CleanBrilliant.Stubs;
 using CleanBrilliant.DataSource.Gateways;
 using CleanBrilliant.Interfaces;
 using CleanBrilliant.Services;
@@ -27,10 +33,11 @@ builder.Services.AddScoped<DashboardLayoutSerializer>();
 builder.Services.AddScoped<DashboardLayoutControl>();
 builder.Services.AddScoped<IWidgetBuilder, WidgetBuilder>();
 builder.Services.AddScoped<WidgetControl>();
-builder.Services.AddScoped<CoefficientControl>();
+builder.Services.AddSingleton<CoefficientControl>();
+builder.Services.AddSingleton<CleanBrilliant.Services.ICoefficientManager>(sp => sp.GetRequiredService<CoefficientControl>());
 
 // Register Calculator for both Interfaces to ensure singleton-per-request behavior
-builder.Services.AddScoped<IPreShipmentCarbonReader, PreShipmentCarbonCalculator>();
+builder.Services.AddScoped<CleanBrilliant.Data.Interfaces.IPreShipmentCarbonReader, PreShipmentCarbonCalculator>();
 builder.Services.AddScoped<IPreShipmentCarbonWriter, PreShipmentCarbonCalculator>();
 
 // Register Analytics
@@ -39,6 +46,54 @@ builder.Services.AddScoped<ProductDetailGateway>();
 // Register the Calculator under its Interfaces (Business Logic)
 builder.Services.AddScoped<IProductDetailWriter, ProductCalculator>();
 builder.Services.AddScoped<IProductDetailReader,ProductCalculator>();
+
+// ── Module 3: Carbon Footprint Calculator ──
+
+// Gateway interfaces → implementations
+builder.Services.AddScoped<IOutboundDistributionGateway, OutboundDistributionGateway>();
+builder.Services.AddScoped<IInboundLogisticsGateway, InboundLogisticsGateway>();
+builder.Services.AddScoped<ISupplierTransportCarbonGateway, SupplierTransportCarbonGateway>();
+builder.Services.AddScoped<ICustomerTransportCarbonGateway, CustomerTransportCarbonGateway>();
+builder.Services.AddScoped<ISupplierCarbonDataGateway, SupplierCarbonDataGateway>();
+builder.Services.AddScoped<ICustomerCarbonDataGateway, CustomerCarbonDataGateway>();
+builder.Services.AddScoped<IEmployeeRepository, EmployeeRepositoryGateway>();
+builder.Services.AddScoped<IBuildingRepository, BuildingRepositoryGateway>();
+builder.Services.AddScoped<IShippingMethodGateway, ShippingMethodGateway>();
+
+// Boundary adapters
+builder.Services.AddHttpClient<IOSRMService, OSRMApiAdapter>();
+builder.Services.AddScoped<IPostalService, PostalCodeDatabaseAdapter>();
+
+// Cross-team stubs [P1-5]
+builder.Services.AddScoped<CleanBrilliant.Domain.DomainInterface.IPreShipmentCarbonReader, PreShipmentCarbonReaderStub>();
+builder.Services.AddScoped<CleanBrilliant.Domain.DomainInterface.ICoefficientManager, CoefficientManagerStub>();
+
+// Factory
+builder.Services.AddScoped<ICarbonEntityFactory, CustomerEntityFactory>();
+
+// Control classes (no dependencies)
+builder.Services.AddScoped<TransportHubManager>();
+builder.Services.AddScoped<CarbonAnalysis>();
+builder.Services.AddScoped<ICarbonAnalysisService>(sp => sp.GetRequiredService<CarbonAnalysis>());
+
+// Route calculation (multi-interface: register concrete, then forward interfaces)
+builder.Services.AddScoped<OutboundDistribution>();
+builder.Services.AddScoped<ICustomerDistanceService>(sp => sp.GetRequiredService<OutboundDistribution>());
+builder.Services.AddScoped<IEstimatedTimeService>(sp => sp.GetRequiredService<OutboundDistribution>());
+builder.Services.AddScoped<InboundLogistics>();
+builder.Services.AddScoped<IRestockDistanceService>(sp => sp.GetRequiredService<InboundLogistics>());
+
+// Carbon calculation (multi-interface)
+builder.Services.AddScoped<TransportCarbonManager>();
+builder.Services.AddScoped<IDistanceCarbonService>(sp => sp.GetRequiredService<TransportCarbonManager>());
+builder.Services.AddScoped<IGetCarbonData>(sp => sp.GetRequiredService<TransportCarbonManager>());
+builder.Services.AddScoped<ISaveShippingMethod>(sp => sp.GetRequiredService<TransportCarbonManager>());
+builder.Services.AddScoped<CarbonDataAggregator>();
+builder.Services.AddScoped<ITotalCarbonService>(sp => sp.GetRequiredService<CarbonDataAggregator>());
+
+// Corporate carbon
+builder.Services.AddScoped<EmployeeCarbonManager>();
+builder.Services.AddScoped<BuildingCarbonManager>();
 
 // Add services to the container.
 builder.Services.AddControllersWithViews();
