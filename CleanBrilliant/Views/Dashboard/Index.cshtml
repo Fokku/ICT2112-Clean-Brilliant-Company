@@ -3,6 +3,8 @@
 @{
     ViewData["Title"] = "CO2 Dashboard";
     var layouts = ViewBag.AllLayouts as List<CleanBrilliant.Models.DashboardLayout>;
+    var startDate = (DateOnly?)ViewBag.StartDate;
+    var endDate = (DateOnly?)ViewBag.EndDate;
 }
 
 <!-- External Libraries -->
@@ -26,7 +28,7 @@
             {
                 <li class="nav-item">
                     <a class="nav-link @(layout.LayoutId == Model.LayoutId ? "active" : "")"
-                       href="@Url.Action("Index", "Dashboard", new { layoutId = layout.LayoutId })">
+                       href="@Url.Action("Index", "Dashboard", new { layoutId = layout.LayoutId, startDate = startDate, endDate = endDate })">
                         @layout.LayoutName
                     </a>
                 </li>

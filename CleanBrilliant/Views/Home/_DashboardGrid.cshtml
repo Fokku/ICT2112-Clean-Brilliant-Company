@@ -3,7 +3,7 @@
 @using System.Text.Json
 @{
     var widgetControl = ViewBag.WidgetControl as WidgetControl;
-    var startDate = (DateOnly?)ViewBag.StartDate ?? DateOnly.FromDateTime(DateTime.Today.AddDays(-4));
+    var startDate = (DateOnly?)ViewBag.StartDate ?? new DateOnly(2026, 1, 1);
     var endDate = (DateOnly?)ViewBag.EndDate ?? DateOnly.FromDateTime(DateTime.Today);
 }
 
@@ -29,6 +29,8 @@
                     <form asp-controller="Dashboard" asp-action="RemoveWidget" method="post" class="m-0 p-0">
                         <input type="hidden" name="layoutId" value="@Model.LayoutId" />
                         <input type="hidden" name="placementId" value="@placement.PlacementId" />
+                        <input type="hidden" name="startDate" value="@startDate.ToString("yyyy-MM-dd")" />
+                        <input type="hidden" name="endDate" value="@endDate.ToString("yyyy-MM-dd")" />
                         <button type="submit" class="btn btn-sm btn-danger py-0 px-2">X</button>
                     </form>
                 </div>

@@ -1,10 +1,16 @@
 @model int 
 @using CleanBrilliant.Models
+@{
+    var startDate = (DateOnly?)ViewBag.StartDate;
+    var endDate = (DateOnly?)ViewBag.EndDate;
+}
 
 <div class="modal fade" id="widgetConfigModal" tabindex="-1">
     <div class="modal-dialog">
         <form asp-controller="Dashboard" asp-action="AddWidget" method="post" class="modal-content">
             <input type="hidden" name="layoutId" value="@Model" />
+            <input type="hidden" name="startDate" value="@startDate?.ToString("yyyy-MM-dd")" />
+            <input type="hidden" name="endDate" value="@endDate?.ToString("yyyy-MM-dd")" />
             <div class="modal-header"><h5 class="modal-title">Configure Widget</h5></div>
             <div class="modal-body">
                 <div class="mb-2" id="titleInputDiv"><label>Title</label><input id="titleInput" type="text" name="title" class="form-control" required /></div>
