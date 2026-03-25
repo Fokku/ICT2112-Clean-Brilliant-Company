@@ -1,5 +1,6 @@
-using System.Globalization;
 using CleanBrilliant.Models;
+using Microsoft.Extensions.Configuration;
+using Npgsql;
 
 namespace CleanBrilliant.Interfaces
 {
@@ -7,13 +8,25 @@ namespace CleanBrilliant.Interfaces
     {
         PreShipmentCarbonDataDTO GetPreShipmentCarbonData(int orderId)
         {
-            var record = ReadAllRows().FirstOrDefault(r => r.OrderId == orderId);
-            if (record == null)
+            const string sql = @"
+                SELECT order_id, time_stamp, product_cf, storage_cf, packaging_cf
+                FROM pre_shipment_carbon_data
+                WHERE order_id = @orderId
+                LIMIT 1;";
+
+            using var conn = new NpgsqlConnection(GetConnectionString());
+            conn.Open();
+
+            using var cmd = new NpgsqlCommand(sql, conn);
+            cmd.Parameters.AddWithValue("orderId", orderId);
+
+            using var reader = cmd.ExecuteReader();
+            if (!reader.Read())
             {
-                throw new InvalidOperationException($"Order {orderId} was not found in dummydata.txt.");
+                throw new InvalidOperationException($"Order {orderId} was not found in pre_shipment_carbon_data.");
             }
 
-            return record;
+            return MapRow(reader);
         }
 
         List<PreShipmentCarbonDataDTO> GetPreShipmentCarbonBreakdownByDate(DateOnly startDate, DateOnly endDate)
@@ -23,52 +36,59 @@ namespace CleanBrilliant.Interfaces
                 (startDate, endDate) = (endDate, startDate);
             }
 
-            return ReadAllRows()
-                .Where(r => DateOnly.FromDateTime(r.TimeStamp) >= startDate && DateOnly.FromDateTime(r.TimeStamp) <= endDate)
-                .OrderBy(r => r.TimeStamp)
-                .ToList();
-        }
-
-        private static List<PreShipmentCarbonDataDTO> ReadAllRows()
-        {
-            var candidatePaths = new[]
-            {
-                Path.Combine(Directory.GetCurrentDirectory(), "Data", "dummydata.txt"),
-                Path.Combine(AppContext.BaseDirectory, "Data", "dummydata.txt"),
-                Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "Data", "dummydata.txt")
-            };
-
-            var dataPath = candidatePaths.FirstOrDefault(File.Exists);
-            if (dataPath == null)
-            {
-                throw new FileNotFoundException("Could not locate dummydata.txt.");
-            }
+            const string sql = @"
+                SELECT order_id, time_stamp, product_cf, storage_cf, packaging_cf
+                FROM pre_shipment_carbon_data
+                WHERE time_stamp::date BETWEEN @startDate AND @endDate
+                ORDER BY time_stamp;";
 
             var rows = new List<PreShipmentCarbonDataDTO>();
-            foreach (var line in File.ReadLines(dataPath))
+
+            using var conn = new NpgsqlConnection(GetConnectionString());
+            conn.Open();
+
+            using var cmd = new NpgsqlCommand(sql, conn);
+            cmd.Parameters.AddWithValue("startDate", startDate);
+            cmd.Parameters.AddWithValue("endDate", endDate);
+
+            using var reader = cmd.ExecuteReader();
+            while (reader.Read())
             {
-                if (string.IsNullOrWhiteSpace(line) || line.StartsWith("#"))
-                {
-                    continue;
-                }
-
-                var parts = line.Split('|');
-                if (parts.Length != 5)
-                {
-                    continue;
-                }
-
-                rows.Add(new PreShipmentCarbonDataDTO
-                {
-                    OrderId = int.Parse(parts[0], CultureInfo.InvariantCulture),
-                    TimeStamp = DateTime.Parse(parts[1], CultureInfo.InvariantCulture),
-                    ProductCF = float.Parse(parts[2], CultureInfo.InvariantCulture),
-                    StorageCF = float.Parse(parts[3], CultureInfo.InvariantCulture),
-                    PackagingCF = float.Parse(parts[4], CultureInfo.InvariantCulture)
-                });
+                rows.Add(MapRow(reader));
             }
 
             return rows;
+        }
+
+        private static string GetConnectionString()
+        {
+            var environment = Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT");
+            var config = new ConfigurationBuilder()
+                .SetBasePath(Directory.GetCurrentDirectory())
+                .AddJsonFile("appsettings.json", optional: true)
+                .AddJsonFile($"appsettings.{environment}.json", optional: true)
+                .AddEnvironmentVariables()
+                .Build();
+
+            var connString = config.GetConnectionString("DefaultConnection");
+            if (string.IsNullOrWhiteSpace(connString))
+            {
+                throw new InvalidOperationException("Missing ConnectionStrings:DefaultConnection.");
+            }
+
+            return connString;
+        }
+
+        private static PreShipmentCarbonDataDTO MapRow(NpgsqlDataReader reader)
+        {
+            return new PreShipmentCarbonDataDTO
+            {
+                OrderId = reader.GetInt32(0),
+                TimeStamp = reader.GetDateTime(1),
+                ProductCF = (float)reader.GetDecimal(2),
+                StorageCF = (float)reader.GetDecimal(3),
+                PackagingCF = (float)reader.GetDecimal(4)
+            };
         }
     }
 }

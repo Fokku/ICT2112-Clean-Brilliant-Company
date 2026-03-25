@@ -66,6 +66,10 @@ artifacts/
 # ASP.NET Scaffolding
 ScaffoldingReadMe.txt
 
+# Local app settings with secrets
+CleanBrilliant/appsettings.json
+CleanBrilliant/appsettings.Development.json
+
 # StyleCop
 StyleCopReport.xml
 
