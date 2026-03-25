@@ -377,3 +377,5 @@ FodyWeavers.xsd
 /CleanBrilliant/Domain/Entity/RestockOrder.cs
 /CleanBrilliant/DTO/RestockDTO.cs
 /CleanBrilliant/DataSource/EF/AppDbContext.cs
+CleanBrilliant/appsettings.json
+CleanBrilliant/appsettings.json

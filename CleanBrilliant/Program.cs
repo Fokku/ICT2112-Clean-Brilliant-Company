@@ -34,6 +34,10 @@ builder.Services.AddScoped<IPreShipmentCarbonWriter, PreShipmentCarbonCalculator
 
 // Register Analytics
 builder.Services.AddScoped<IAggregatedData, Co2AnalyticsControl>();
+builder.Services.AddScoped<ProductDetailGateway>();
+// Register the Calculator under its Interfaces (Business Logic)
+builder.Services.AddScoped<IProductDetailWriter, ProductCalculator>();
+builder.Services.AddScoped<IProductDetailReader,ProductCalculator>();
 
 // Add services to the container.
 builder.Services.AddControllersWithViews();
