@@ -4,7 +4,7 @@ using CleanBrilliant.Models;
 using Microsoft.Extensions.Configuration;
 using Npgsql;
 
-namespace CleanBrilliant.Data.Gateways
+namespace CleanBrilliant.DataSource.Gateways
 {
     public class ProductDetailGateway 
     {

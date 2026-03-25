@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using CleanBrilliant.Interfaces;
 using CleanBrilliant.Models;
-using CleanBrilliant.Data.Gateways;
+using CleanBrilliant.DataSource.Gateways;
 
 namespace CleanBrilliant.Services
 {

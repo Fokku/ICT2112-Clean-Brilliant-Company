@@ -2,7 +2,7 @@ using CleanBrilliant.Interfaces;
 using Npgsql;
 using System.Data;
 
-namespace CleanBrilliant.Data.Gateways
+namespace CleanBrilliant.DataSource.Gateways
 {
     public class DashboardLayoutGateway : IDashboardLayoutGateway
     {

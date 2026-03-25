@@ -1,6 +1,6 @@
 using System.Data;
 using CleanBrilliant.Data.Interfaces;
-using CleanBrilliant.Data.Gateways;
+using CleanBrilliant.DataSource.Gateways;
 using CleanBrilliant.DTO;
 using CleanBrilliant.Models.CarbonStrategies;
 using CleanBrilliant.Models.Interfaces;

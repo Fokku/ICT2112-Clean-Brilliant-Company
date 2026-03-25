@@ -1,7 +1,7 @@
 using System.Data;
 using Npgsql;
 
-namespace CleanBrilliant.Data.Gateways
+namespace CleanBrilliant.DataSource.Gateways
 {
     public class PreShipmentGateway
     {
