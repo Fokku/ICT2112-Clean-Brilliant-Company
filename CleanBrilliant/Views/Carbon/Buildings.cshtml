@@ -1,0 +1,69 @@
+@{
+    ViewData["Title"] = "Building Carbon Tracking";
+}
+
+<div class="container py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 class="mb-0">Building Carbon Tracking</h2>
+        <a href="/Carbon" class="text-decoration-none" style="font-size:.9rem;">← Back to Dashboard</a>
+    </div>
+
+    <div class="row g-4">
+        <!-- Left Panel: Add Form -->
+        <div class="col-md-4 col-lg-3">
+            <div class="card">
+                <div class="card-body">
+                    <h6 class="text-uppercase text-muted fw-semibold mb-3" style="font-size:.82rem;letter-spacing:.5px;">Add Building</h6>
+                    <form id="add-building-form">
+                        <div class="mb-3">
+                            <label for="bld-address" class="form-label" style="font-size:.85rem;">Address</label>
+                            <input type="text" class="form-control" id="bld-address" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="bld-sqft" class="form-label" style="font-size:.85rem;">Square Footage</label>
+                            <input type="number" class="form-control" id="bld-sqft" step="0.1" min="0" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="bld-electricity" class="form-label" style="font-size:.85rem;">Electricity (kWh)</label>
+                            <input type="number" class="form-control" id="bld-electricity" step="0.1" min="0" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="bld-gas" class="form-label" style="font-size:.85rem;">Gas Volume</label>
+                            <input type="number" class="form-control" id="bld-gas" step="0.1" min="0" required>
+                        </div>
+                        <button type="submit" class="btn btn-primary w-100">Add Building</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Right Panel: Table -->
+        <div class="col-md-8 col-lg-9" id="building-table-container">
+            <div class="card">
+                <div class="card-body p-0">
+                    <table class="table table-hover mb-0" id="building-table">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Address</th>
+                                <th>Sq Ft</th>
+                                <th>Electricity</th>
+                                <th>Gas</th>
+                                <th>CO₂</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr><td colspan="7" class="text-center text-muted py-4">Loading...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="~/js/carbon.js" asp-append-version="true"></script>
+    <script>$(function () { Carbon.initBuildings(); });</script>
+}

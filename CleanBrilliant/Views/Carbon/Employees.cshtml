@@ -1,0 +1,76 @@
+@{
+    ViewData["Title"] = "Employee Carbon Tracking";
+}
+
+<div class="container py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 class="mb-0">Employee Carbon Tracking</h2>
+        <a href="/Carbon" class="text-decoration-none" style="font-size:.9rem;">← Back to Dashboard</a>
+    </div>
+
+    <div class="row g-4">
+        <!-- Left Panel: Add Form -->
+        <div class="col-md-4 col-lg-3">
+            <div class="card">
+                <div class="card-body">
+                    <h6 class="text-uppercase text-muted fw-semibold mb-3" style="font-size:.82rem;letter-spacing:.5px;">Add Employee</h6>
+                    <form id="add-employee-form">
+                        <div class="mb-3">
+                            <label for="emp-work-mode" class="form-label" style="font-size:.85rem;">Work Mode</label>
+                            <select class="form-select" id="emp-work-mode">
+                                <option value="0">Remote</option>
+                                <option value="1">Onsite</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label for="emp-transport-mode" class="form-label" style="font-size:.85rem;">Transport Mode</label>
+                            <select class="form-select" id="emp-transport-mode" disabled>
+                                <option value="0">Car</option>
+                                <option value="1">Bus</option>
+                                <option value="2">Train</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label for="emp-travel-distance" class="form-label" style="font-size:.85rem;">Travel Distance (km)</label>
+                            <input type="number" class="form-control" id="emp-travel-distance" step="0.1" min="0" disabled>
+                        </div>
+                        <div class="mb-3">
+                            <label for="emp-days-in-office" class="form-label" style="font-size:.85rem;">Days in Office / Week</label>
+                            <input type="number" class="form-control" id="emp-days-in-office" min="0" max="7" value="0">
+                        </div>
+                        <button type="submit" class="btn btn-primary w-100">Add Employee</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Right Panel: Table -->
+        <div class="col-md-8 col-lg-9" id="employee-table-container">
+            <div class="card">
+                <div class="card-body p-0">
+                    <table class="table table-hover mb-0" id="employee-table">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Work Mode</th>
+                                <th>Transport</th>
+                                <th>Distance</th>
+                                <th>Days</th>
+                                <th>CO₂</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr><td colspan="7" class="text-center text-muted py-4">Loading...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="~/js/carbon.js" asp-append-version="true"></script>
+    <script>$(function () { Carbon.initEmployees(); });</script>
+}
