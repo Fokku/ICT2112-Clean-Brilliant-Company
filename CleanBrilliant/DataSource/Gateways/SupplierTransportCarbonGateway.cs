@@ -36,7 +36,9 @@ namespace CleanBrilliant.Data.Gateways
             const string sql = @"
                 SELECT restock_id, distance_carbon, timestamp
                 FROM supplier_transport_carbon
-                WHERE restock_id = @restockID;";
+                WHERE restock_id = @restockID
+                ORDER BY timestamp DESC
+                LIMIT 1;";
 
             var ds = new DataSet();
 

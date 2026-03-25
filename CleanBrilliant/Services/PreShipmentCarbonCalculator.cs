@@ -7,7 +7,7 @@ using CleanBrilliant.Models.Interfaces;
 
 namespace CleanBrilliant.Services
 {
-    public class PreShipmentCarbonCalculator : IPreShipmentCarbonReader, IPreShipmentCarbonWriter
+    public class PreShipmentCarbonCalculator : IPreShipmentCarbonReader, IPreShipmentCarbonWriter, CleanBrilliant.Domain.DomainInterface.IPreShipmentCarbonReader
     {
         private ICarbonFootprintStrategy _strategy;
         private readonly PreShipmentGateway _gateway;
@@ -94,6 +94,16 @@ namespace CleanBrilliant.Services
             }
 
             return results;
+        }
+
+        async Task<PreShipmentCarbonDataDTO> CleanBrilliant.Domain.DomainInterface.IPreShipmentCarbonReader.GetPreShipmentCarbonData(int orderID)
+        {
+            await Task.CompletedTask;
+
+            return GetPreShipmentCarbonData(orderID) ?? new PreShipmentCarbonDataDTO
+            {
+                OrderId = orderID
+            };
         }
     }
 }

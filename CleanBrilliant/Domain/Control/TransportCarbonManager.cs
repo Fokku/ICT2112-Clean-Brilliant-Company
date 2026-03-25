@@ -1,5 +1,6 @@
 using CleanBrilliant.Domain.BoundaryInterface;
 using CleanBrilliant.Domain.DomainInterface;
+using CleanBrilliant.Services;
 using EntityRouteData = CleanBrilliant.Domain.Entity.RouteData;
 
 namespace CleanBrilliant.Domain.Control
@@ -8,7 +9,7 @@ namespace CleanBrilliant.Domain.Control
     {
         private readonly ICustomerDistanceService _customerDistanceService;
         private readonly IRestockDistanceService _restockDistanceService;
-        private readonly ICoefficientManager _coefficientManager;
+        private readonly CleanBrilliant.Services.ICoefficientManager _coefficientManager;
         private readonly ICarbonEntityFactory _factory;
         private readonly ISupplierTransportCarbonGateway _supplierTransportCarbonGateway;
         private readonly ICustomerTransportCarbonGateway _customerTransportCarbonGateway;
@@ -18,7 +19,7 @@ namespace CleanBrilliant.Domain.Control
         public TransportCarbonManager(
             ICustomerDistanceService customerDistanceService,
             IRestockDistanceService restockDistanceService,
-            ICoefficientManager coefficientManager,
+            CleanBrilliant.Services.ICoefficientManager coefficientManager,
             ICarbonEntityFactory factory,
             ISupplierTransportCarbonGateway supplierTransportCarbonGateway,
             ICustomerTransportCarbonGateway customerTransportCarbonGateway,
@@ -38,13 +39,15 @@ namespace CleanBrilliant.Domain.Control
         public async Task<float> CalculateCustomerDistanceCarbon(string orderID, string shippingMethod)
         {
             float distance = await _customerDistanceService.GetCustomerDistance(orderID);
-            return _carbonAnalysis.EstimateShippingCarbon(shippingMethod, distance);
+            float baseCarbon = _carbonAnalysis.EstimateShippingCarbon(shippingMethod, distance);
+            return ApplyConfiguredCoefficient(shippingMethod, baseCarbon);
         }
 
         public async Task<float> CalculateSupplierDistanceCarbon(string restockID, string shippingMethod)
         {
             float distance = await _restockDistanceService.GetRestockDistance(restockID);
-            return _carbonAnalysis.EstimateShippingCarbon(shippingMethod, distance);
+            float baseCarbon = _carbonAnalysis.EstimateShippingCarbon(shippingMethod, distance);
+            return ApplyConfiguredCoefficient(shippingMethod, baseCarbon);
         }
 
         public async Task LogCustomerEmission(string orderID, float distanceCarbon)
@@ -64,7 +67,27 @@ namespace CleanBrilliant.Domain.Control
             string? shippingMethod = await _shippingMethodGateway.FindShippingMethod(orderID);
             if (string.IsNullOrEmpty(shippingMethod))
                 shippingMethod = "truck";
-            return _carbonAnalysis.EstimateShippingCarbon(shippingMethod, routeData.DistanceKm);
+
+            float baseCarbon = _carbonAnalysis.EstimateShippingCarbon(shippingMethod, routeData.DistanceKm);
+            return ApplyConfiguredCoefficient(shippingMethod, baseCarbon);
+        }
+
+        private float ApplyConfiguredCoefficient(string shippingMethod, float baseCarbon)
+        {
+            var normalizedMethod = NormalizeShippingMethod(shippingMethod);
+            float configuredCoefficient = _coefficientManager.getEmission(normalizedMethod);
+            return baseCarbon * configuredCoefficient;
+        }
+
+        private static string NormalizeShippingMethod(string shippingMethod)
+        {
+            var normalized = (shippingMethod ?? "truck").Trim().ToLowerInvariant();
+            return normalized switch
+            {
+                "air" => "plane",
+                "rail" => "train",
+                _ => normalized
+            };
         }
 
         public async Task<float> GetOrderShippingCarbon(string orderID)

@@ -7,13 +7,12 @@ namespace CleanBrilliant.Domain.Control
         private readonly float _lowThreshold = 50.0f;
         private readonly float _highThreshold = 200.0f;
 
-        private static readonly Dictionary<string, float> Coefficients = new()
+        private readonly CleanBrilliant.Services.ICoefficientManager _coefficientManager;
+
+        public CarbonAnalysis(CleanBrilliant.Services.ICoefficientManager coefficientManager)
         {
-            { "air", 1.5f },
-            { "truck", 0.5f },
-            { "ship", 0.1f },
-            { "rail", 0.05f }
-        };
+            _coefficientManager = coefficientManager;
+        }
 
         public string Analyze(float totalCarbon)
         {
@@ -24,19 +23,18 @@ namespace CleanBrilliant.Domain.Control
 
         public float EstimateShippingCarbon(string method, float distanceKm)
         {
-            if (Coefficients.TryGetValue(method.ToLower(), out float coeff))
-                return distanceKm * coeff;
-            return distanceKm * 0.5f; // default to truck
+            var coeff = GetConfiguredCoefficient(method);
+            return distanceKm * coeff;
         }
 
         public string RecommendLowestShippingMethod(float distanceKm)
         {
             string best = "truck";
             float lowest = float.MaxValue;
-            foreach (var kvp in Coefficients)
+            foreach (var method in new[] { "truck", "air", "ship", "rail" })
             {
-                float carbon = distanceKm * kvp.Value;
-                if (carbon < lowest) { lowest = carbon; best = kvp.Key; }
+                float carbon = distanceKm * GetConfiguredCoefficient(method);
+                if (carbon < lowest) { lowest = carbon; best = method; }
             }
             return best;
         }
@@ -44,6 +42,38 @@ namespace CleanBrilliant.Domain.Control
         public async Task<string> GetShippingRecommendation(string postalCode, string deliveryType, string countryCode)
         {
             return await Task.FromResult(RecommendLowestShippingMethod(100)); // placeholder distance
+        }
+
+        private float GetConfiguredCoefficient(string method)
+        {
+            var normalized = NormalizeMethod(method);
+
+            try
+            {
+                return _coefficientManager.getEmission(normalized);
+            }
+            catch (KeyNotFoundException)
+            {
+                return normalized switch
+                {
+                    "plane" => 1.5f,
+                    "truck" => 0.5f,
+                    "ship" => 0.1f,
+                    "train" => 0.05f,
+                    _ => 0.5f
+                };
+            }
+        }
+
+        private static string NormalizeMethod(string method)
+        {
+            var normalized = (method ?? "truck").Trim().ToLowerInvariant();
+            return normalized switch
+            {
+                "air" => "plane",
+                "rail" => "train",
+                _ => normalized
+            };
         }
     }
 }

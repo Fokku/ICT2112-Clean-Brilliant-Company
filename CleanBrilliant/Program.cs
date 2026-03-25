@@ -3,7 +3,6 @@ using CleanBrilliant.Domain.BoundaryInterface;
 using CleanBrilliant.Domain.Control;
 using CleanBrilliant.Domain.DomainInterface;
 using CleanBrilliant.Boundary;
-using CleanBrilliant.Stubs;
 using CleanBrilliant.DataSource.Gateways;
 using CleanBrilliant.Interfaces;
 using CleanBrilliant.Services;
@@ -36,9 +35,11 @@ builder.Services.AddScoped<WidgetControl>();
 builder.Services.AddSingleton<CoefficientControl>();
 builder.Services.AddSingleton<CleanBrilliant.Services.ICoefficientManager>(sp => sp.GetRequiredService<CoefficientControl>());
 
-// Register Calculator for both Interfaces to ensure singleton-per-request behavior
-builder.Services.AddScoped<CleanBrilliant.Data.Interfaces.IPreShipmentCarbonReader, PreShipmentCarbonCalculator>();
-builder.Services.AddScoped<IPreShipmentCarbonWriter, PreShipmentCarbonCalculator>();
+// Register calculator once and forward all required interfaces to the same scoped instance
+builder.Services.AddScoped<PreShipmentCarbonCalculator>();
+builder.Services.AddScoped<CleanBrilliant.Data.Interfaces.IPreShipmentCarbonReader>(sp => sp.GetRequiredService<PreShipmentCarbonCalculator>());
+builder.Services.AddScoped<IPreShipmentCarbonWriter>(sp => sp.GetRequiredService<PreShipmentCarbonCalculator>());
+builder.Services.AddScoped<CleanBrilliant.Domain.DomainInterface.IPreShipmentCarbonReader>(sp => sp.GetRequiredService<PreShipmentCarbonCalculator>());
 
 // Register Analytics
 builder.Services.AddScoped<IAggregatedData, Co2AnalyticsControl>();
@@ -63,10 +64,6 @@ builder.Services.AddScoped<IShippingMethodGateway, ShippingMethodGateway>();
 // Boundary adapters
 builder.Services.AddHttpClient<IOSRMService, OSRMApiAdapter>();
 builder.Services.AddScoped<IPostalService, PostalCodeDatabaseAdapter>();
-
-// Cross-team stubs [P1-5]
-builder.Services.AddScoped<CleanBrilliant.Domain.DomainInterface.IPreShipmentCarbonReader, PreShipmentCarbonReaderStub>();
-builder.Services.AddScoped<CleanBrilliant.Domain.DomainInterface.ICoefficientManager, CoefficientManagerStub>();
 
 // Factory
 builder.Services.AddScoped<ICarbonEntityFactory, CustomerEntityFactory>();
