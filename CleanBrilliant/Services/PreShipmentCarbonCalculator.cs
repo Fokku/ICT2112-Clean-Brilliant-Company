@@ -4,6 +4,7 @@ using CleanBrilliant.Data.Gateways;
 using CleanBrilliant.DTO;
 using CleanBrilliant.Models.CarbonStrategies;
 using CleanBrilliant.Models.Interfaces;
+using CleanBrilliant.Interfaces;
 
 namespace CleanBrilliant.Services
 {
@@ -11,12 +12,15 @@ namespace CleanBrilliant.Services
     {
         private ICarbonFootprintStrategy _strategy;
         private readonly PreShipmentGateway _gateway;
-        private const string TableName = "pre_shipment_carbon_data"; // Define table name here
+        private readonly IProductDetailReader _productReader; // 1. Add the interface
+        private const string TableName = "pre_shipment_carbon_data"; 
 
-        public PreShipmentCarbonCalculator(PreShipmentGateway gateway)
+        // 2. Inject it into the constructor
+        public PreShipmentCarbonCalculator(PreShipmentGateway gateway, IProductDetailReader productReader)
         {
             _strategy = new ProductCF();
             _gateway = gateway;
+            _productReader = productReader;
         }
 
         public void SetStrategy(ICarbonFootprintStrategy strategy)
@@ -26,6 +30,23 @@ namespace CleanBrilliant.Services
 
         public float CalculateCarbon(PreShipmentDetailDTO dto)
         {
+            // 3. Intercept the ProductCF calculation to use the Database Reader
+            if (_strategy is ProductCF)
+            {
+                float totalProductCarbon = 0f;
+                foreach (var item in dto.ProductOrderDetailList)
+                {
+                    // Fetch the saved calculation from the Toxic Analyzer module!
+                    var detail = _productReader.GetProductDetail(item.ProductID);
+                    if (detail != null)
+                    {
+                        totalProductCarbon += detail.Carbon * item.Quantity;
+                    }
+                }
+                return totalProductCarbon;
+            }
+
+            // For PackagingCF and StorageCF, fall back to the normal strategy math
             return _strategy.CalculateCarbon(dto);
         }
 

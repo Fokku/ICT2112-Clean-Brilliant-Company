@@ -29,6 +29,8 @@ builder.Services.AddScoped<IWidgetBuilder, WidgetBuilder>();
 builder.Services.AddScoped<WidgetControl>();
 builder.Services.AddSingleton<CoefficientControl>();
 
+builder.Services.AddScoped<IProductDetailReader, ProductCalculator>();
+
 // Register Calculator for both Interfaces to ensure singleton-per-request behavior
 builder.Services.AddScoped<IPreShipmentCarbonReader, PreShipmentCarbonCalculator>();
 builder.Services.AddScoped<IPreShipmentCarbonWriter, PreShipmentCarbonCalculator>();
