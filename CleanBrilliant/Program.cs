@@ -27,7 +27,7 @@ builder.Services.AddScoped<DashboardLayoutSerializer>();
 builder.Services.AddScoped<DashboardLayoutControl>();
 builder.Services.AddScoped<IWidgetBuilder, WidgetBuilder>();
 builder.Services.AddScoped<WidgetControl>();
-builder.Services.AddScoped<CoefficientControl>();
+builder.Services.AddSingleton<CoefficientControl>();
 
 // Register Calculator for both Interfaces to ensure singleton-per-request behavior
 builder.Services.AddScoped<IPreShipmentCarbonReader, PreShipmentCarbonCalculator>();

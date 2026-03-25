@@ -92,6 +92,24 @@ namespace CleanBrilliant.Controllers
                 return StatusCode(500, "Unexpected error occurred.");
             }
         }
+
+        [HttpGet]
+        public IActionResult CalculateEmission(string name, float distance)
+        {
+            try
+            {
+                float coefficient = _coefficientControl.getEmission(name);
+
+                float result = coefficient * distance;
+
+                return Ok(result);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
+        }
+
         [HttpPost]
         public async Task<IActionResult> CreateLayout(string layoutName)
         {
