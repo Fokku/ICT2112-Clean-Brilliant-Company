@@ -1,14 +1,18 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using CleanBrilliant.Models;
+using Microsoft.EntityFrameworkCore;
 
-namespace CleanBrilliantProject.Data.DbCon
+namespace CleanBrilliant.Data.DbCon
 {
     public class AppDbContext : DbContext
     {
         public AppDbContext(DbContextOptions<AppDbContext> options) : base(options) { }
 
+
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             modelBuilder.ApplyConfigurationsFromAssembly(typeof(AppDbContext).Assembly);
+
+            base.OnModelCreating(modelBuilder);
         }
     }
 }

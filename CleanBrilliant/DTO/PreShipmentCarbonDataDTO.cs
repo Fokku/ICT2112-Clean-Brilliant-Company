@@ -1,4 +1,6 @@
-namespace CleanBrilliant.Models
+using System;
+
+namespace CleanBrilliant.DTO
 {
     public class PreShipmentCarbonDataDTO
     {
@@ -7,5 +9,7 @@ namespace CleanBrilliant.Models
         public float ProductCF { get; set; }
         public float StorageCF { get; set; }
         public float PackagingCF { get; set; }
+
+        public float TotalCF => ProductCF + StorageCF + PackagingCF;
     }
 }

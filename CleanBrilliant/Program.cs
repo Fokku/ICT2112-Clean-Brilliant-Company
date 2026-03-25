@@ -2,8 +2,11 @@ using CleanBrilliant.Data.Gateways;
 using CleanBrilliant.Interfaces;
 using CleanBrilliant.Services;
 using Microsoft.EntityFrameworkCore;
-using CleanBrilliantProject.Data.DbCon;
 using Npgsql;
+using CleanBrilliant.Data.Interfaces;
+using CleanBrilliant.Data.DbCon;
+using CleanBrilliant.Models.Interfaces;
+using CleanBrilliant.Models.CarbonStrategies;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -12,14 +15,30 @@ builder.Services.AddDbContext<AppDbContext>(options =>
         builder.Configuration.GetConnectionString("DefaultConnection")
     ));
 
-// Dashboard services
+// --- Database Gateways ---
 builder.Services.AddScoped<IDashboardLayoutGateway, DashboardLayoutGateway>();
+builder.Services.AddScoped<PreShipmentGateway>();
+
+// --- Strategies ---
+builder.Services.AddScoped<ICarbonFootprintStrategy, ProductCF>();
+
+// --- Services & Controls ---
 builder.Services.AddScoped<DashboardLayoutSerializer>();
 builder.Services.AddScoped<DashboardLayoutControl>();
 builder.Services.AddScoped<IWidgetBuilder, WidgetBuilder>();
-builder.Services.AddScoped<IAggregatedData, Co2AnalyticsControl>();
 builder.Services.AddScoped<WidgetControl>();
 builder.Services.AddScoped<CoefficientControl>();
+
+// Register Calculator for both Interfaces to ensure singleton-per-request behavior
+builder.Services.AddScoped<IPreShipmentCarbonReader, PreShipmentCarbonCalculator>();
+builder.Services.AddScoped<IPreShipmentCarbonWriter, PreShipmentCarbonCalculator>();
+
+// Register Analytics
+builder.Services.AddScoped<IAggregatedData, Co2AnalyticsControl>();
+builder.Services.AddScoped<ProductDetailGateway>();
+// Register the Calculator under its Interfaces (Business Logic)
+builder.Services.AddScoped<IProductDetailWriter, ProductCalculator>();
+builder.Services.AddScoped<IProductDetailReader,ProductCalculator>();
 
 // Add services to the container.
 builder.Services.AddControllersWithViews();
