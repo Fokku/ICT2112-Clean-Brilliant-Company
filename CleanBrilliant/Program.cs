@@ -20,6 +20,11 @@ builder.Services.AddScoped<IWidgetBuilder, WidgetBuilder>();
 builder.Services.AddScoped<IAggregatedData, Co2AnalyticsControl>();
 builder.Services.AddScoped<WidgetControl>();
 
+builder.Services.AddScoped<ProductDetailGateway>();
+// Register the Calculator under its Interfaces (Business Logic)
+builder.Services.AddScoped<IProductDetailWriter, ProductCalculator>();
+builder.Services.AddScoped<IProductDetailReader,ProductCalculator>();
+
 // Add services to the container.
 builder.Services.AddControllersWithViews();
 builder.Services.AddDistributedMemoryCache();
