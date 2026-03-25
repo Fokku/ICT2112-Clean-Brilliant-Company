@@ -1,17 +1,27 @@
-using CleanBrilliant.Models;
+using CleanBrilliant.Data.Interfaces;
+using CleanBrilliant.DTO;
 using CleanBrilliant.Interfaces;
+using CleanBrilliant.Models;
 
 namespace CleanBrilliant.Services
 {
-    public class Co2AnalyticsControl : IAggregatedData, IPreShipmentCarbonReader
+    public class Co2AnalyticsControl : IAggregatedData
     {
+        private readonly IPreShipmentCarbonReader _preShipmentCarbonReader;
+
+        public Co2AnalyticsControl(IPreShipmentCarbonReader preShipmentCarbonReader)
+        {
+            _preShipmentCarbonReader = preShipmentCarbonReader;
+        }
+
         public List<CO2AggregatePoint> GetAggregatedData(
             ComponentType componentType,
             AggregationType aggregation,
             DateOnly startDate,
             DateOnly endDate)
         {
-            var rows = ((IPreShipmentCarbonReader)this).GetPreShipmentCarbonBreakdownByDate(startDate, endDate);
+            // Fixed the invalid self-cast.
+            var rows = _preShipmentCarbonReader.GetPreShipmentCarbonBreakdownByDate(startDate, endDate);
 
             return rows
                 .GroupBy(r => DateOnly.FromDateTime(r.TimeStamp))

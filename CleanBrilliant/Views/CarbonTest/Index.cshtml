@@ -1,0 +1,123 @@
+@{
+    ViewData["Title"] = "Carbon Interface Tester";
+}
+
+<div class="container py-4">
+    <h2 class="mb-4">PreShipment Carbon Interface Testing</h2>
+
+    @if (TempData["SuccessMsg"] != null)
+    {
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            <strong>@TempData["SuccessMsg"]</strong>
+            @if (TempData["OutputResults"] != null)
+            {
+                <hr />
+                <pre class="mb-0" style="white-space: pre-wrap;">@TempData["OutputResults"]</pre>
+            }
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
+    @if (TempData["ErrorMsg"] != null)
+    {
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            @TempData["ErrorMsg"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
+    @if (TempData["FetchResult"] != null)
+    {
+        <div class="alert alert-info font-monospace alert-dismissible fade show" role="alert">
+            @TempData["FetchResult"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
+
+    <div class="row">
+        <div class="col-md-6 mb-4">
+            <div class="card h-100">
+                <div class="card-header bg-dark text-white d-flex justify-content-between align-items-center">
+                    <span>Create Dummy Record (Writer)</span>
+                    <button type="button" class="btn btn-sm btn-outline-light" onclick="autoFillRandomData()">
+                        <i class="bi bi-magic"></i> Auto-Fill Random Data
+                    </button>
+                </div>
+                <div class="card-body">
+                    <form asp-controller="CarbonTest" asp-action="InjectDummyData" method="post">
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">Order ID</label>
+                            <input type="number" id="orderId" name="orderId" class="form-control" value="1001" required />
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">Timestamp (Shipment Date)</label>
+                            <input type="date" id="timeStamp" name="timeStamp" class="form-control" value="@DateTime.Today.ToString("yyyy-MM-dd")" required />
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">Product Quantities</label>
+                            <input type="text" id="productQuantities" name="productQuantities" class="form-control" placeholder="e.g., 10, 5, 2" required />
+                            <small class="text-muted">Comma-separated quantities. (e.g., "10, 5" creates two products with those quantities).</small>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">Package Quantity</label>
+                            <input type="number" id="packageQty" name="packageQty" class="form-control" value="2" required />
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">Received Dates</label>
+                            <input type="text" id="receivedDates" name="receivedDates" class="form-control" placeholder="e.g., 2026-03-01, 2026-03-05" required />
+                            <small class="text-muted">Comma-separated dates. Storage CF is calculated against the Shipment Date above.</small>
+                        </div>
+                        <button type="submit" class="btn btn-primary w-100 mt-2">Calculate & Insert Database Record</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-6 mb-4">
+            <div class="card h-100">
+                <div class="card-header bg-secondary text-white">Fetch Specific Order (Reader)</div>
+                <div class="card-body">
+                    <form asp-controller="CarbonTest" asp-action="FetchDummyData" method="get">
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">Order ID</label>
+                            <input type="number" name="orderId" class="form-control" placeholder="e.g. 1001" required />
+                        </div>
+                        <button type="submit" class="btn btn-outline-primary w-100 mt-2">Fetch Record</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    function autoFillRandomData() {
+        // 1. Random Order ID (between 1000 and 99999)
+        document.getElementById('orderId').value = Math.floor(Math.random() * 90000) + 1000;
+
+        // 2. Random Shipment Date (within the last 30 days)
+        const shipmentDate = new Date();
+        shipmentDate.setDate(shipmentDate.getDate() - Math.floor(Math.random() * 30));
+        document.getElementById('timeStamp').value = shipmentDate.toISOString().split('T')[0];
+
+        // 3. Random Product Quantities (1 to 4 products, random quantities between 1 and 50)
+        const numProducts = Math.floor(Math.random() * 4) + 1;
+        const quantities = [];
+        for (let i = 0; i < numProducts; i++) {
+            quantities.push(Math.floor(Math.random() * 50) + 1);
+        }
+        document.getElementById('productQuantities').value = quantities.join(', ');
+
+        // 4. Random Package Quantity (between 1 and 10)
+        document.getElementById('packageQty').value = Math.floor(Math.random() * 10) + 1;
+
+        // 5. Random Received Dates (must be BEFORE the shipment date to simulate storage time)
+        const numReceivedDates = Math.floor(Math.random() * 3) + 1; // 1 to 3 received batches
+        const receivedDates = [];
+        for (let i = 0; i < numReceivedDates; i++) {
+            const recDate = new Date(shipmentDate);
+            // Received between 1 and 14 days prior to shipment
+            recDate.setDate(recDate.getDate() - (Math.floor(Math.random() * 14) + 1)); 
+            receivedDates.push(recDate.toISOString().split('T')[0]);
+        }
+        document.getElementById('receivedDates').value = receivedDates.join(', ');
+    }
+</script>
