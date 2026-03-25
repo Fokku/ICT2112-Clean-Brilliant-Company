@@ -1,6 +1,4 @@
 using CleanBrilliant.Data.Gateways;
-using CleanBrilliant.Domain.BoundaryInterface;
-using CleanBrilliant.Domain.Control;
 using CleanBrilliant.Services;
 using Microsoft.EntityFrameworkCore;
 using CleanBrilliantProject.Data.DbCon;
@@ -12,12 +10,6 @@ builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseNpgsql(
         builder.Configuration.GetConnectionString("DefaultConnection")
     ));
-
-builder.Services.AddScoped<CategoryManager>();
-builder.Services.AddScoped<ProductManager>();
-
-builder.Services.AddScoped<ICategoryGateway, CategoryGateway>();
-builder.Services.AddScoped<IProductGateway, ProductGateway>();
 
 // Dashboard services
 builder.Services.AddScoped<DashboardLayoutGateway>();

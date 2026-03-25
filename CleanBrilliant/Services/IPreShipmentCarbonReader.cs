@@ -33,9 +33,9 @@ namespace CleanBrilliant.Services
         {
             var candidatePaths = new[]
             {
-                Path.Combine(Directory.GetCurrentDirectory(), "DataSource", "dummydata.txt"),
-                Path.Combine(AppContext.BaseDirectory, "DataSource", "dummydata.txt"),
-                Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "DataSource", "dummydata.txt")
+                Path.Combine(Directory.GetCurrentDirectory(), "Data", "dummydata.txt"),
+                Path.Combine(AppContext.BaseDirectory, "Data", "dummydata.txt"),
+                Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "Data", "dummydata.txt")
             };
 
             var dataPath = candidatePaths.FirstOrDefault(File.Exists);

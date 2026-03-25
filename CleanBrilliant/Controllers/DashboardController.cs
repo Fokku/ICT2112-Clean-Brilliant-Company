@@ -1,6 +1,5 @@
 using Microsoft.AspNetCore.Mvc;
 using CleanBrilliant.Models;
-using CleanBrilliant.Domain.Control;
 using CleanBrilliant.Services;
 using Microsoft.AspNetCore.Http;
 

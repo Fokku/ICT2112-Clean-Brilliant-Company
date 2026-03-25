@@ -1,5 +1,4 @@
-﻿using CleanBrilliant.Domain.Entity;
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 
 namespace CleanBrilliantProject.Data.DbCon
 {
