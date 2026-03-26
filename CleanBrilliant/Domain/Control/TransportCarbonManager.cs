@@ -94,14 +94,14 @@ namespace CleanBrilliant.Domain.Control
         {
             var table = await _customerTransportCarbonGateway.FindBy(orderID);
             if (table.Rows.Count == 0) return 0f;
-            return Convert.ToSingle(table.Rows[0]["distance_carbon"]);
+            return Convert.ToSingle(table.Rows[0]["carbon_amount"]);
         }
 
         public async Task<float> GetRestockShippingCarbon(string restockID)
         {
             var table = await _supplierTransportCarbonGateway.FindBy(restockID);
             if (table.Rows.Count == 0) return 0f;
-            return Convert.ToSingle(table.Rows[0]["distance_carbon"]);
+            return Convert.ToSingle(table.Rows[0]["carbon_amount"]);
         }
 
         public async Task SaveShippingMethod(string shippingMethod)
