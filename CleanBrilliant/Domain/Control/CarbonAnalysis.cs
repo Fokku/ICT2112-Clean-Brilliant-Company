@@ -4,6 +4,15 @@ namespace CleanBrilliant.Domain.Control
 {
     public class CarbonAnalysis : ICarbonAnalysisService
     {
+        private static readonly IReadOnlyDictionary<string, float> MalaysiaMethodDistances =
+            new Dictionary<string, float>(StringComparer.OrdinalIgnoreCase)
+            {
+                ["truck"] = 350f,
+                ["air"] = 299f,
+                ["ship"] = 326f,
+                ["rail"] = 349f
+            };
+
         private readonly float _lowThreshold = 50.0f;
         private readonly float _highThreshold = 200.0f;
 
@@ -58,10 +67,46 @@ namespace CleanBrilliant.Domain.Control
 
         public async Task<string> GetShippingRecommendation(string postalCode, string deliveryType, string countryCode)
         {
-            float placeholderDistanceKm = 100f;
-            
-            // Pass the deliveryType down to the actual calculation method
-            return await Task.FromResult(RecommendLowestShippingMethod(placeholderDistanceKm, deliveryType)); 
+            if (IsSingaporeDestination(countryCode))
+            {
+                return await Task.FromResult("truck");
+            }
+
+            if (IsMalaysiaDestination(countryCode))
+            {
+                return await Task.FromResult(RecommendLowestShippingMethodForMalaysia(deliveryType));
+            }
+
+            return await Task.FromResult("truck");
+        }
+
+        private string RecommendLowestShippingMethodForMalaysia(string deliveryType)
+        {
+            string best = "truck";
+            float lowest = float.MaxValue;
+
+            string[] allowedMethods = deliveryType switch
+            {
+                "1" => ["air"],
+                "2" => ["air", "truck"],
+                "3" => ["truck", "rail", "ship"],
+                _ => ["truck", "air", "ship", "rail"]
+            };
+
+            foreach (var method in allowedMethods)
+            {
+                var distance = MalaysiaMethodDistances.TryGetValue(method, out var fixedDistance)
+                    ? fixedDistance
+                    : 350f;
+                float carbon = distance * GetConfiguredCoefficient(method);
+                if (carbon < lowest)
+                {
+                    lowest = carbon;
+                    best = method;
+                }
+            }
+
+            return best;
         }
 
         private float GetConfiguredCoefficient(string method)
@@ -94,6 +139,18 @@ namespace CleanBrilliant.Domain.Control
                 "rail" => "train",
                 _ => normalized
             };
+        }
+
+        private static bool IsSingaporeDestination(string countryCode)
+        {
+            var normalized = (countryCode ?? string.Empty).Trim().ToLowerInvariant();
+            return normalized is "" or "sg" or "sgp" or "singapore";
+        }
+
+        private static bool IsMalaysiaDestination(string countryCode)
+        {
+            var normalized = (countryCode ?? string.Empty).Trim().ToLowerInvariant();
+            return normalized is "my" or "mys" or "malaysia";
         }
     }
 }

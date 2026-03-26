@@ -28,9 +28,7 @@ namespace CleanBrilliant.Domain.Control
 
         public async Task<float> GetOrderCarbon(string orderID, string countryCode, string postalCode, ICarbonEntityFactory factory)
         {
-            int parsedId = int.TryParse(orderID, out int id) ? id : 0;
-            var preShipmentData =  _preShipmentCarbonReader.GetPreShipmentCarbonData(parsedId);
-            float preShipmentCarbon = preShipmentData?.TotalPreShipmentCarbon ?? 0f;
+            float preShipmentCarbon = GetPreShipmentCarbon(orderID);
 
             float shippingCarbon = await _getCarbonData.GetOrderShippingCarbon(orderID);
             float totalCarbon = preShipmentCarbon + shippingCarbon;
@@ -43,8 +41,9 @@ namespace CleanBrilliant.Domain.Control
 
         public async Task<float> GetSupplierOrderCarbon(string restockID, string postalCode, string countryCode, ICarbonEntityFactory factory)
         {
+            float preShipmentCarbon = GetPreShipmentCarbon(restockID);
             float shippingCarbon = await _getCarbonData.GetRestockShippingCarbon(restockID);
-            float totalCarbon = shippingCarbon;
+            float totalCarbon = preShipmentCarbon + shippingCarbon;
 
             float timeStamp = (float)DateTimeOffset.UtcNow.ToUnixTimeSeconds();
             await _supplierCarbonDataGateway.Insert(restockID, totalCarbon, timeStamp);
@@ -71,19 +70,18 @@ namespace CleanBrilliant.Domain.Control
                 return null;
             }
 
-            int parsedId = int.TryParse(orderID, out int id) ? id : 0;
-            var preShipmentData = _preShipmentCarbonReader.GetPreShipmentCarbonData(parsedId);
-            float preOrderCarbon = preShipmentData?.TotalPreShipmentCarbon ?? 0f;
+            float preOrderCarbon = GetPreShipmentCarbon(orderID);
             float shippingCarbon = await _getCarbonData.GetOrderShippingCarbon(orderID);
+            float totalCarbon = preOrderCarbon + shippingCarbon;
 
             return new
             {
                 orderID,
                 preOrderCarbon,
                 shippingCarbon,
-                totalCarbon = summary.TotalCarbon,
+                totalCarbon,
                 timestamp = summary.Timestamp,
-                formula = $"{preOrderCarbon:0.##} + {shippingCarbon:0.##} = {summary.TotalCarbon:0.##} tonnes CO2"
+                formula = $"{preOrderCarbon:0.##} + {shippingCarbon:0.##} = {totalCarbon:0.##} tonnes CO2"
             };
         }
 
@@ -106,18 +104,30 @@ namespace CleanBrilliant.Domain.Control
                 return null;
             }
 
-            float preOrderCarbon = 0f;
+            float preOrderCarbon = GetPreShipmentCarbon(restockID);
             float shippingCarbon = await _getCarbonData.GetRestockShippingCarbon(restockID);
+            float totalCarbon = preOrderCarbon + shippingCarbon;
 
             return new
             {
                 restockID,
                 preOrderCarbon,
                 shippingCarbon,
-                totalCarbon = summary.TotalCarbon,
+                totalCarbon,
                 timestamp = summary.Timestamp,
-                formula = $"{preOrderCarbon:0.##} + {shippingCarbon:0.##} = {summary.TotalCarbon:0.##} tonnes CO2"
+                formula = $"{preOrderCarbon:0.##} + {shippingCarbon:0.##} = {totalCarbon:0.##} tonnes CO2"
             };
+        }
+
+        private float GetPreShipmentCarbon(string referenceId)
+        {
+            if (!int.TryParse(referenceId, out int parsedId))
+            {
+                return 0f;
+            }
+
+            var preShipmentData = _preShipmentCarbonReader.GetPreShipmentCarbonData(parsedId);
+            return preShipmentData?.TotalPreShipmentCarbon ?? 0f;
         }
 
         public async Task<List<float>> GetCarbonLogs()

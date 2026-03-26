@@ -12,17 +12,20 @@ namespace CleanBrilliant.Controllers
         private readonly CarbonDataAggregator _carbonDataAggregator;
         private readonly CleanBrilliant.Domain.BoundaryInterface.ISupplierLookupGateway _supplierLookupGateway;
         private readonly OutboundDistribution _outboundDistribution;
+        private readonly InboundLogistics _inboundLogistics;
 
         public CarbonCalculationController(
             TransportCarbonManager transportCarbonManager,
             CarbonDataAggregator carbonDataAggregator,
             CleanBrilliant.Domain.BoundaryInterface.ISupplierLookupGateway supplierLookupGateway,
-            OutboundDistribution outboundDistribution)
+            OutboundDistribution outboundDistribution,
+            InboundLogistics inboundLogistics)
         {
             _transportCarbonManager = transportCarbonManager;
             _carbonDataAggregator = carbonDataAggregator;
             _supplierLookupGateway = supplierLookupGateway;
             _outboundDistribution = outboundDistribution;
+            _inboundLogistics = inboundLogistics;
         }
 
         [HttpGet("order/{orderID}/shipping")]
@@ -119,6 +122,66 @@ namespace CleanBrilliant.Controllers
             return Ok(summary);
         }
 
+        [HttpGet("inbound-warehouses")]
+        public IActionResult GetInboundWarehouses()
+        {
+            var results = _inboundLogistics.GetSupportedWarehouses().Select(warehouse => new
+            {
+                warehouse.Id,
+                warehouse.Name,
+                warehouse.PostalCode,
+                companyLocation = InboundLogistics.CompanyLocationName,
+                companyPostalCode = InboundLogistics.CompanyPostalCode,
+                shippingMethod = "truck"
+            });
+
+            return Ok(results);
+        }
+
+        [HttpGet("inbound-route")]
+        public async Task<IActionResult> CalculateInboundRoute([FromQuery] string warehouseId)
+        {
+            if (string.IsNullOrWhiteSpace(warehouseId))
+            {
+                return BadRequest(new { message = "A supported warehouse ID is required." });
+            }
+
+            try
+            {
+                var warehouse = _inboundLogistics.GetSupportedWarehouse(warehouseId);
+                if (warehouse == null)
+                {
+                    return BadRequest(new
+                    {
+                        message = "Inbound logistics only supports SIT Campus W Block, SIT Dover, and SIT NYP."
+                    });
+                }
+
+                var route = await _inboundLogistics.CalculateInboundRoute(warehouseId);
+
+                return Ok(new
+                {
+                    companyName = InboundLogistics.CompanyLocationName,
+                    companyPostalCode = InboundLogistics.CompanyPostalCode,
+                    warehouseId = warehouse.Id,
+                    warehouseName = warehouse.Name,
+                    warehousePostalCode = warehouse.PostalCode,
+                    shippingMethod = "truck",
+                    sourceLatitude = Math.Round(route.SourceLatitude, 6),
+                    sourceLongitude = Math.Round(route.SourceLongitude, 6),
+                    destinationLatitude = Math.Round(route.DestinationLatitude, 6),
+                    destinationLongitude = Math.Round(route.DestinationLongitude, 6),
+                    distanceKm = Math.Round(route.DistanceKm, 2),
+                    durationMin = Math.Round(route.DurationMin, 2),
+                    formula = route.Formula
+                });
+            }
+            catch (InvalidOperationException ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+        }
+
         [HttpGet("hubs")]
         public async Task<IActionResult> GetHubs()
         {
@@ -186,11 +249,86 @@ namespace CleanBrilliant.Controllers
             }
         }
 
+        [HttpGet("outbound-route")]
+        public async Task<IActionResult> CalculateOutboundRoute(
+            [FromQuery] string warehouseId,
+            [FromQuery] string customerPostalCode,
+            [FromQuery] string method = "truck",
+            [FromQuery] string countryCode = "SG")
+        {
+            var normalizedMethod = NormalizeShippingMethod(method);
+            var malaysiaDestination = IsMalaysiaDestination(countryCode);
+
+            if (string.IsNullOrWhiteSpace(warehouseId))
+            {
+                return BadRequest(new { message = "A supported warehouse ID is required." });
+            }
+
+            if (string.IsNullOrWhiteSpace(customerPostalCode) &&
+                (!malaysiaDestination || string.Equals(normalizedMethod, "truck", StringComparison.OrdinalIgnoreCase)))
+            {
+                return BadRequest(new { message = "Customer postal code is required for truck routes." });
+            }
+
+            try
+            {
+                var route = await _outboundDistribution.CalculateOutboundRoute(warehouseId, customerPostalCode, method, countryCode);
+
+                return Ok(new
+                {
+                    companyName = OutboundDistribution.CompanyLocationName,
+                    companyPostalCode = OutboundDistribution.CompanyPostalCode,
+                    warehouseId = route.WarehouseId,
+                    warehouseName = route.WarehouseName,
+                    customerPostalCode,
+                    countryCode,
+                    shippingMethod = route.SelectedMethod,
+                    distanceKm = Math.Round(route.TotalDistanceKm, 2),
+                    durationMin = Math.Round(route.TotalDurationMin, 2),
+                    formula = route.Formula,
+                    legs = route.Legs.Select(leg => new
+                    {
+                        method = leg.Method,
+                        source = leg.Source,
+                        destination = leg.Destination,
+                        distanceKm = Math.Round(leg.DistanceKm, 2),
+                        durationMin = Math.Round(leg.DurationMin, 2),
+                        sourceLatitude = leg.SourceLatitude == null ? (double?)null : Math.Round(leg.SourceLatitude.Value, 6),
+                        sourceLongitude = leg.SourceLongitude == null ? (double?)null : Math.Round(leg.SourceLongitude.Value, 6),
+                        destinationLatitude = leg.DestinationLatitude == null ? (double?)null : Math.Round(leg.DestinationLatitude.Value, 6),
+                        destinationLongitude = leg.DestinationLongitude == null ? (double?)null : Math.Round(leg.DestinationLongitude.Value, 6),
+                        calculationType = leg.SourceType
+                    })
+                });
+            }
+            catch (InvalidOperationException ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+        }
+
         [HttpGet("logs")]
         public async Task<IActionResult> GetCarbonLogs()
         {
             var logs = await _carbonDataAggregator.GetCarbonLogs();
             return Ok(logs);
+        }
+
+        private static string NormalizeShippingMethod(string method)
+        {
+            var normalized = (method ?? "truck").Trim().ToLowerInvariant();
+            return normalized switch
+            {
+                "plane" => "air",
+                "train" => "rail",
+                _ => normalized
+            };
+        }
+
+        private static bool IsMalaysiaDestination(string countryCode)
+        {
+            var normalized = (countryCode ?? string.Empty).Trim().ToLowerInvariant();
+            return normalized is "my" or "mys" or "malaysia";
         }
 
         private static string? GetString(System.Data.DataRow row, string columnName)

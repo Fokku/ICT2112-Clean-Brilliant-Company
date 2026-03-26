@@ -49,7 +49,7 @@ namespace CleanBrilliant.Domain.Control
         public async Task<float> CalculateSupplierDistanceCarbon(string restockID, string shippingMethod)
         {
             float supplierDistanceKm = await _restockDistanceService.GetRestockDistance(restockID);
-            return CalculateCarbonFromDistance(supplierDistanceKm, shippingMethod);
+            return CalculateCarbonFromDistance(supplierDistanceKm, "truck");
         }
 
         public async Task LogCustomerEmission(string orderID, float distanceCarbon)
@@ -190,6 +190,11 @@ namespace CleanBrilliant.Domain.Control
             var method = transportRow.Table.Columns.Contains("shipping_method") && transportRow["shipping_method"] != DBNull.Value
                 ? Convert.ToString(transportRow["shipping_method"]) ?? "Unknown"
                 : "Unknown";
+
+            if (string.Equals(type, "restock", StringComparison.OrdinalIgnoreCase))
+            {
+                method = "truck";
+            }
 
             float shippingCarbon = Convert.ToSingle(transportRow["carbon_amount"]);
             float? timestamp = transportRow["timestamp"] == DBNull.Value ? null : Convert.ToSingle(transportRow["timestamp"]);

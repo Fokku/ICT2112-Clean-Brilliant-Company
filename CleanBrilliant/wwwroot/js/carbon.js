@@ -105,18 +105,44 @@ var Carbon = (function ($) {
     }
 
     function renderHubLookup(result) {
+        var legsHtml = '';
+        if (Array.isArray(result.legs)) {
+            result.legs.forEach(function (leg, index) {
+                legsHtml += '' +
+                    '<div class="p-3 rounded mt-2" style="background:#ffffff;border:1px solid #dbe4ee;">' +
+                    '<div class="d-flex justify-content-between mb-2"><span class="text-muted">Leg ' + (index + 1) + '</span><span class="fw-semibold text-uppercase">' + leg.method + '</span></div>' +
+                    '<div class="d-flex justify-content-between mb-2"><span class="text-muted">From</span><span class="fw-semibold">' + leg.source + '</span></div>' +
+                    '<div class="d-flex justify-content-between mb-2"><span class="text-muted">To</span><span class="fw-semibold">' + leg.destination + '</span></div>' +
+                    '<div class="d-flex justify-content-between mb-2"><span class="text-muted">Distance</span><span class="fw-semibold">' + leg.distanceKm + ' km</span></div>' +
+                    '<div class="d-flex justify-content-between mb-2"><span class="text-muted">Duration</span><span class="fw-semibold">' + leg.durationMin + ' min</span></div>' +
+                    '<div class="d-flex justify-content-between"><span class="text-muted">Calculation</span><span class="fw-semibold">' + leg.calculationType + '</span></div>' +
+                    '</div>';
+            });
+        }
+
         return '' +
             '<div class="p-3 rounded" style="background:#f8fafc;border:1px solid #e2e8f0;">' +
-            '<div class="d-flex justify-content-between mb-2"><span class="text-muted">Customer Postal Code</span><span class="fw-semibold">' + result.customerPostalCode + '</span></div>' +
-            '<div class="d-flex justify-content-between mb-2"><span class="text-muted">Company Name</span><span class="fw-semibold">' + result.companyName + '</span></div>' +
-            '<div class="d-flex justify-content-between mb-2"><span class="text-muted">Hub Postal Code</span><span class="fw-semibold">' + result.hubPostalCode + '</span></div>' +
-            '<div class="d-flex justify-content-between mb-2"><span class="text-muted">Customer Latitude</span><span class="fw-semibold">' + result.customerLatitude + '</span></div>' +
-            '<div class="d-flex justify-content-between mb-2"><span class="text-muted">Customer Longitude</span><span class="fw-semibold">' + result.customerLongitude + '</span></div>' +
-            '<div class="d-flex justify-content-between mb-2"><span class="text-muted">Hub Latitude</span><span class="fw-semibold">' + result.hubLatitude + '</span></div>' +
-            '<div class="d-flex justify-content-between mb-2"><span class="text-muted">Hub Longitude</span><span class="fw-semibold">' + result.hubLongitude + '</span></div>' +
+            '<div class="d-flex justify-content-between mb-2"><span class="text-muted">Warehouse</span><span class="fw-semibold">' + result.warehouseName + '</span></div>' +
+            '<div class="d-flex justify-content-between mb-2"><span class="text-muted">Customer Location</span><span class="fw-semibold">' + result.customerPostalCode + '</span></div>' +
+            '<div class="d-flex justify-content-between mb-2"><span class="text-muted">Country</span><span class="fw-semibold">' + result.countryCode + '</span></div>' +
+            '<div class="d-flex justify-content-between mb-2"><span class="text-muted">Selected Method</span><span class="fw-semibold">' + result.shippingMethod + '</span></div>' +
+            '<div class="d-flex justify-content-between mb-2"><span class="text-muted">Total Distance</span><span class="fw-semibold">' + result.distanceKm + ' km</span></div>' +
+            '<div class="d-flex justify-content-between mb-2"><span class="text-muted">Total Duration</span><span class="fw-semibold">' + result.durationMin + ' min</span></div>' +
+            '<div class="mb-2"><span class="text-muted d-block">Route Chain</span><span class="fw-semibold">' + result.formula + '</span></div>' +
+            legsHtml +
+            '</div>';
+    }
+
+    function renderInboundLookup(result) {
+        return '' +
+            '<div class="p-3 rounded" style="background:#f8fafc;border:1px solid #e2e8f0;">' +
+            '<div class="d-flex justify-content-between mb-2"><span class="text-muted">Company</span><span class="fw-semibold">' + result.companyName + '</span></div>' +
+            '<div class="d-flex justify-content-between mb-2"><span class="text-muted">Warehouse</span><span class="fw-semibold">' + result.warehouseName + '</span></div>' +
+            '<div class="d-flex justify-content-between mb-2"><span class="text-muted">Method</span><span class="fw-semibold">' + result.shippingMethod + '</span></div>' +
             '<div class="d-flex justify-content-between mb-2"><span class="text-muted">Distance</span><span class="fw-semibold">' + result.distanceKm + ' km</span></div>' +
-            '<div class="mb-2"><span class="text-muted d-block">Coordinate Route</span><span class="fw-semibold">' + result.formula + '</span></div>' +
-            '<div class="d-flex justify-content-between"><span class="text-muted">Estimated Duration</span><span class="fw-semibold">' + result.durationMin + ' min</span></div>' +
+            '<div class="d-flex justify-content-between mb-2"><span class="text-muted">Duration</span><span class="fw-semibold">' + result.durationMin + ' min</span></div>' +
+            '<div class="mb-2"><span class="text-muted d-block">Route</span><span class="fw-semibold">' + result.companyName + ' -> ' + result.warehouseName + '</span></div>' +
+            '<div class="mb-2"><span class="text-muted d-block">Formula</span><span class="fw-semibold">' + result.formula + '</span></div>' +
             '</div>';
     }
 
@@ -178,30 +204,24 @@ var Carbon = (function ($) {
     }
 
     function initHubLookup() {
-        $.get('/api/carbon/hubs', function (data) {
-            var select = $('#hub-select');
-            select.empty();
-
-            if (!data || data.length === 0) {
-                select.append('<option value="">No hubs available</option>');
-                return;
-            }
-
-            select.append('<option value="">Select a hub</option>');
-            data.forEach(function (hub) {
-                var label = hub.companyName + ' (' + hub.postalCode + ')';
-                select.append(
-                    $('<option></option>')
-                        .val(hub.supplierId)
-                        .text(label)
-                        .attr('data-company-name', hub.companyName)
-                        .attr('data-postal-code', hub.postalCode)
-                );
-            });
+        $.get('/api/carbon/inbound-warehouses', function (data) {
+            bindWarehouseOptions($('#warehouse-select'), data, 'Select a warehouse');
+            bindWarehouseOptions($('#inbound-warehouse-select'), data, 'Select a warehouse');
         }).fail(function () {
-            showError('#hub-lookup-container', 'Failed to load hub list.');
-            $('#hub-select').html('<option value="">Failed to load hubs</option>');
+            showError('#hub-lookup-container', 'Failed to load warehouse list.');
+            $('#warehouse-select').html('<option value="">Failed to load warehouses</option>');
+            $('#inbound-warehouse-select').html('<option value="">Failed to load warehouses</option>');
         });
+
+        $('#country-code').on('change', function () {
+            var isSingapore = $(this).val() === 'SG';
+            var methodSelect = $('#transport-method');
+            methodSelect.val('truck');
+            methodSelect.find('option').prop('disabled', false);
+            if (isSingapore) {
+                methodSelect.find('option').not('[value="truck"]').prop('disabled', true);
+            }
+        }).trigger('change');
 
         $('#hub-lookup-form').on('submit', function (e) {
             e.preventDefault();
@@ -209,30 +229,79 @@ var Carbon = (function ($) {
             setLoading(btn, true);
 
             var customerPostalCode = $('#customer-postal-code').val();
-            var selectedHub = $('#hub-select option:selected');
-            var supplierId = selectedHub.val();
+            var warehouseId = $('#warehouse-select').val();
+            var countryCode = $('#country-code').val();
+            var method = $('#transport-method').val();
 
-            if (!supplierId) {
-                showError('#hub-lookup-container', 'Select a current hub first.');
+            if (!warehouseId) {
+                showError('#hub-lookup-container', 'Select a warehouse first.');
                 setLoading(btn, false, 'Calculate Distance');
                 $('#hub-lookup-result').hide();
                 return;
             }
 
-            $.get('/api/carbon/customer-distance', {
+            $.get('/api/carbon/outbound-route', {
+                warehouseId: warehouseId,
                 customerPostalCode: customerPostalCode,
-                hubPostalCode: selectedHub.attr('data-postal-code'),
-                companyName: selectedHub.attr('data-company-name')
+                method: method,
+                countryCode: countryCode
             }, function (result) {
                 clearError('#hub-lookup-container');
                 $('#hub-lookup-result').html(renderHubLookup(result)).show();
                 setLoading(btn, false, 'Calculate Distance');
             }).fail(function (xhr) {
-                var message = xhr.responseJSON?.message || 'Failed to calculate customer-to-hub distance.';
+                var message = xhr.responseJSON?.message || 'Failed to calculate outbound route.';
                 showError('#hub-lookup-container', message);
                 setLoading(btn, false, 'Calculate Distance');
                 $('#hub-lookup-result').hide();
             });
+        });
+
+        $('#inbound-route-form').on('submit', function (e) {
+            e.preventDefault();
+            var btn = $(this).find('button[type="submit"]');
+            setLoading(btn, true);
+
+            var warehouseId = $('#inbound-warehouse-select').val();
+            if (!warehouseId) {
+                showError('#hub-lookup-container', 'Select a warehouse for inbound testing.');
+                setLoading(btn, false, 'Test Inbound Route');
+                $('#inbound-route-result').hide();
+                return;
+            }
+
+            $.get('/api/carbon/inbound-route', {
+                warehouseId: warehouseId
+            }, function (result) {
+                clearError('#hub-lookup-container');
+                $('#inbound-route-result').html(renderInboundLookup(result)).show();
+                setLoading(btn, false, 'Test Inbound Route');
+            }).fail(function (xhr) {
+                var message = xhr.responseJSON?.message || 'Failed to calculate inbound route.';
+                showError('#hub-lookup-container', message);
+                setLoading(btn, false, 'Test Inbound Route');
+                $('#inbound-route-result').hide();
+            });
+        });
+    }
+
+    function bindWarehouseOptions(select, data, placeholder) {
+        select.empty();
+        if (!data || data.length === 0) {
+            select.append('<option value="">No warehouses available</option>');
+            return;
+        }
+
+        select.append('<option value="">' + placeholder + '</option>');
+        data.forEach(function (warehouse) {
+            var label = warehouse.name + ' (' + warehouse.postalCode + ')';
+            select.append(
+                $('<option></option>')
+                    .val(warehouse.id)
+                    .text(label)
+                    .attr('data-warehouse-name', warehouse.name)
+                    .attr('data-postal-code', warehouse.postalCode)
+            );
         });
     }
 
