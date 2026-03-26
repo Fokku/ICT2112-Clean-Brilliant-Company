@@ -41,8 +41,8 @@ namespace CleanBrilliant.Services
                 ComponentType.PRODUCT => row.ProductCF,
                 ComponentType.STORAGE => row.StorageCF,
                 ComponentType.PACKAGING => row.PackagingCF,
-                ComponentType.SHIPMENT => row.ProductCF + row.StorageCF + row.PackagingCF,
-                ComponentType.TOTAL => row.ProductCF + row.StorageCF + row.PackagingCF,
+                ComponentType.SHIPMENT => row.ShipmentCF,
+                ComponentType.TOTAL => row.ProductCF + row.StorageCF + row.PackagingCF + row.ShipmentCF,
                 _ => 0
             };
         }
