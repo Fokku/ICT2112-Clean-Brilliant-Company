@@ -12,9 +12,9 @@ namespace CleanBrilliant.Boundary
             _httpClient = httpClient;
         }
 
-        public async Task<float> GetRouteDistance(double longitude, double latitude)
+        public async Task<float> GetRouteDistance(double srcLongitude, double srcLatitude, double destLongitude, double destLatitude)
         {
-            var url = $"http://router.project-osrm.org/route/v1/driving/{longitude},{latitude};{longitude},{latitude}?overview=false";
+            var url = $"http://router.project-osrm.org/route/v1/driving/{srcLongitude},{srcLatitude};{destLongitude},{destLatitude}?overview=false";
             try
             {
                 var response = await _httpClient.GetStringAsync(url);

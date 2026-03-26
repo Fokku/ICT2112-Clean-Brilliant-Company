@@ -6,6 +6,8 @@ namespace CleanBrilliant.Domain.Control
     {
         private readonly float _lowThreshold = 50.0f;
         private readonly float _highThreshold = 200.0f;
+        private readonly IPostalService _postalService;
+        private readonly IOSRMService _osrmService;
 
         private static readonly Dictionary<string, float> Coefficients = new()
         {
@@ -14,6 +16,12 @@ namespace CleanBrilliant.Domain.Control
             { "ship", 0.1f },
             { "rail", 0.05f }
         };
+
+        public CarbonAnalysis(IPostalService postalService, IOSRMService osrmService)
+        {
+            _postalService = postalService;
+            _osrmService = osrmService;
+        }
 
         public string Analyze(float totalCarbon)
         {
@@ -43,7 +51,12 @@ namespace CleanBrilliant.Domain.Control
 
         public async Task<string> GetShippingRecommendation(string postalCode, string deliveryType, string countryCode)
         {
-            return await Task.FromResult(RecommendLowestShippingMethod(100)); // placeholder distance
+            const string warehousePostal = "018960";
+            var (source, dest) = await _postalService.GetPostalConversion(warehousePostal, postalCode);
+            float distance = await _osrmService.GetRouteDistance(source.Longitude, source.Latitude, dest.Longitude, dest.Latitude);
+            if (distance <= 0)
+                distance = 100f;
+            return RecommendLowestShippingMethod(distance);
         }
     }
 }

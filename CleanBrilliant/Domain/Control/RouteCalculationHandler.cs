@@ -20,8 +20,8 @@ namespace CleanBrilliant.Domain.Control
         public async Task<EntityRouteData> CalculateRoute(string refID, string srcPostal, string destPostal)
         {
             _routeData = _factory.CreateRouteData(refID);
-            var (longitude, latitude) = await ObtainLatLng(srcPostal, destPostal);
-            float distance = await GetRouteDistance(latitude, longitude);
+            var (source, dest) = await ObtainLatLng(srcPostal, destPostal);
+            float distance = await GetRouteDistance(source.Longitude, source.Latitude, dest.Longitude, dest.Latitude);
             _routeData.DistanceKm = distance;
             await CalculateSpecificSegments();
             _routeData.DurationMin = await EstimateTiming();
@@ -29,14 +29,14 @@ namespace CleanBrilliant.Domain.Control
             return _routeData;
         }
 
-        public async Task<(double Longitude, double Latitude)> ObtainLatLng(string sourcePostal, string destPostal)
+        public async Task<((double Longitude, double Latitude) Source, (double Longitude, double Latitude) Dest)> ObtainLatLng(string sourcePostal, string destPostal)
         {
             return await _postalService.GetPostalConversion(sourcePostal, destPostal);
         }
 
-        public async Task<float> GetRouteDistance(double lat, double lng)
+        public async Task<float> GetRouteDistance(double srcLng, double srcLat, double destLng, double destLat)
         {
-            return await _osrmService.GetRouteDistance(lng, lat);
+            return await _osrmService.GetRouteDistance(srcLng, srcLat, destLng, destLat);
         }
 
         protected abstract Task LogRoute(string referenceID);
