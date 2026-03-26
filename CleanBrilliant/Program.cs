@@ -35,6 +35,8 @@ builder.Services.AddScoped<WidgetControl>();
 builder.Services.AddSingleton<CoefficientControl>();
 builder.Services.AddSingleton<CleanBrilliant.Services.ICoefficientManager>(sp => sp.GetRequiredService<CoefficientControl>());
 
+builder.Services.AddScoped<IProductDetailReader, ProductCalculator>();
+
 // Register calculator once and forward all required interfaces to the same scoped instance
 builder.Services.AddScoped<PreShipmentCarbonCalculator>();
 builder.Services.AddScoped<CleanBrilliant.Data.Interfaces.IPreShipmentCarbonReader>(sp => sp.GetRequiredService<PreShipmentCarbonCalculator>());

@@ -24,7 +24,7 @@ namespace CleanBrilliant.Controllers
         }
 
         [HttpPost]
-        public IActionResult InjectDummyData(int orderId, DateTime timeStamp, string productQuantities, int packageQty, string receivedDates)
+        public IActionResult InjectDummyData(int orderId, DateTime timeStamp, int qty101, int qty102, int packageQty, string receivedDates)
         {
             try
             {
@@ -37,18 +37,15 @@ namespace CleanBrilliant.Controllers
                     ReceivedDateList = new List<DateTime>()
                 };
 
-                // Parse Product Quantities (e.g., "10, 5, 2") into the DTO List
-                if (!string.IsNullOrWhiteSpace(productQuantities))
+                // Explicitly map the quantities to the correct Product IDs
+                if (qty101 > 0)
                 {
-                    var qs = productQuantities.Split(',');
-                    int pId = 1;
-                    foreach (var q in qs)
-                    {
-                        if (int.TryParse(q.Trim(), out int qty))
-                        {
-                            dto.ProductOrderDetailList.Add(new ProductOrderDetailDTO { ProductID = pId++, Quantity = qty });
-                        }
-                    }
+                    dto.ProductOrderDetailList.Add(new ProductOrderDetailDTO { ProductID = 101, Quantity = qty101 });
+                }
+
+                if (qty102 > 0)
+                {
+                    dto.ProductOrderDetailList.Add(new ProductOrderDetailDTO { ProductID = 102, Quantity = qty102 });
                 }
 
                 // Parse Received Dates (e.g., "2026-03-01, 2026-03-05") into the DTO List
@@ -63,7 +60,6 @@ namespace CleanBrilliant.Controllers
                         }
                     }
                 }
-
                 // Write to database (Calculations happen here via your Calculator)
                 _writer.CreatePreShipmentCarbonData(dto);
 
@@ -73,7 +69,7 @@ namespace CleanBrilliant.Controllers
                 if (savedData != null)
                 {
                     TempData["SuccessMsg"] = $"Order {orderId} processed successfully!";
-                    TempData["OutputResults"] = 
+                    TempData["OutputResults"] =
                         $"[CALCULATION OUTPUT]\n" +
                         $"Product CF: {savedData.ProductCF} kg\n" +
                         $"Storage CF: {savedData.StorageCF} kg\n" +
@@ -89,7 +85,7 @@ namespace CleanBrilliant.Controllers
             {
                 TempData["ErrorMsg"] = $"Error saving data: {ex.Message}";
             }
-            
+
             return RedirectToAction("Index");
         }
 

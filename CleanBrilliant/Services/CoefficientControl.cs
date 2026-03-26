@@ -12,10 +12,10 @@ namespace CleanBrilliant.Services
         {
             coefficients = new List<EmissionSource>
             {
-                new TruckEmission(1.0f),
-                new ShipEmission(1.0f),
-                new PlaneEmission(1.0f),
-                new TrainEmission(1.0f)
+                new TruckEmission(0.5f),
+                new ShipEmission(0.1f),
+                new PlaneEmission(1.5f),
+                new TrainEmission(0.05f)
             };
         }
 

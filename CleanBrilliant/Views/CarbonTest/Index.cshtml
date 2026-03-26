@@ -51,10 +51,17 @@
                             <label class="form-label fw-bold">Timestamp (Shipment Date)</label>
                             <input type="date" id="timeStamp" name="timeStamp" class="form-control" value="@DateTime.Today.ToString("yyyy-MM-dd")" required />
                         </div>
-                        <div class="mb-3">
-                            <label class="form-label fw-bold">Product Quantities</label>
-                            <input type="text" id="productQuantities" name="productQuantities" class="form-control" placeholder="e.g., 10, 5, 2" required />
-                            <small class="text-muted">Comma-separated quantities. (e.g., "10, 5" creates two products with those quantities).</small>
+                       <div class="row mb-3">
+                            <div class="col">
+                                <label class="form-label fw-bold">Qty: Product 101</label>
+                                <input type="number" id="qty101" name="qty101" class="form-control" value="0" min="0" required />
+                                <small class="text-muted">Toxic Demo</small>
+                            </div>
+                            <div class="col">
+                                <label class="form-label fw-bold">Qty: Product 102</label>
+                                <input type="number" id="qty102" name="qty102" class="form-control" value="0" min="0" required />
+                                <small class="text-muted">Eco Demo</small>
+                            </div>
                         </div>
                         <div class="mb-3">
                             <label class="form-label fw-bold">Package Quantity</label>
@@ -98,13 +105,8 @@
         shipmentDate.setDate(shipmentDate.getDate() - Math.floor(Math.random() * 30));
         document.getElementById('timeStamp').value = shipmentDate.toISOString().split('T')[0];
 
-        // 3. Random Product Quantities (1 to 4 products, random quantities between 1 and 50)
-        const numProducts = Math.floor(Math.random() * 4) + 1;
-        const quantities = [];
-        for (let i = 0; i < numProducts; i++) {
-            quantities.push(Math.floor(Math.random() * 50) + 1);
-        }
-        document.getElementById('productQuantities').value = quantities.join(', ');
+      document.getElementById('qty101').value = Math.floor(Math.random() * 20); // 0 to 19
+        document.getElementById('qty102').value = Math.floor(Math.random() * 50) + 5; // 5 to 54
 
         // 4. Random Package Quantity (between 1 and 10)
         document.getElementById('packageQty').value = Math.floor(Math.random() * 10) + 1;
