@@ -17,7 +17,7 @@ namespace CleanBrilliant.Data.Gateways
         public async Task Insert(string restockID, float distanceCarbon, float timeStamp)
         {
             const string sql = @"
-                INSERT INTO supplier_transport_carbon (restock_id, distance_carbon, timestamp)
+                INSERT INTO supplier_transport_carbon (restock_id, carbon_amount, timestamp)
                 VALUES (@restockID, @distanceCarbon, @timestamp);";
 
             await using var conn = new NpgsqlConnection(_connString);
@@ -34,7 +34,7 @@ namespace CleanBrilliant.Data.Gateways
         public async Task<DataTable> FindBy(string restockID)
         {
             const string sql = @"
-                SELECT restock_id, distance_carbon, timestamp
+                SELECT restock_id, shipping_method, carbon_amount, timestamp
                 FROM supplier_transport_carbon
                 WHERE restock_id = @restockID
                 ORDER BY timestamp DESC

@@ -36,7 +36,9 @@ namespace CleanBrilliant.Data.Gateways
             const string sql = @"
                 SELECT order_id, carbon_amount, timestamp
                 FROM customer_carbon_data
-                WHERE order_id = @orderID;";
+                WHERE order_id = @orderID
+                ORDER BY timestamp DESC
+                LIMIT 1;";
 
             var ds = new DataSet();
 

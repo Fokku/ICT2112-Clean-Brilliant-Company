@@ -36,6 +36,12 @@ namespace CleanBrilliant.Controllers
             return View();
         }
 
+        [HttpGet("RouteSummary")]
+        public IActionResult RouteSummary()
+        {
+            return View();
+        }
+
         [HttpGet("Dashboard")]
         public IActionResult Dashboard()
         {

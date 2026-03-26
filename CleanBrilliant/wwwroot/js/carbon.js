@@ -33,6 +33,10 @@ var Carbon = (function ($) {
         );
     }
 
+    function clearError(container) {
+        $(container).find('.alert-danger').remove();
+    }
+
     // Set button loading state
     function setLoading(btn, loading, originalText) {
         if (loading) {
@@ -41,6 +45,63 @@ var Carbon = (function ($) {
         } else {
             btn.prop('disabled', false).text(originalText || btn.data('original-text') || 'Submit');
         }
+    }
+
+    function formatTimestamp(unixSeconds) {
+        if (unixSeconds === null || unixSeconds === undefined || unixSeconds === '') {
+            return 'N/A';
+        }
+
+        var date = new Date(parseFloat(unixSeconds) * 1000);
+        if (isNaN(date.getTime())) {
+            return 'N/A';
+        }
+
+        return date.toLocaleString();
+    }
+
+    function renderShippingBreakdown(result) {
+        var distanceText = result.distanceKm != null ? result.distanceKm + ' km' : 'N/A';
+        var coefficientText = result.coefficient != null ? result.coefficient : 'N/A';
+        var methodText = result.shippingMethod || 'N/A';
+
+        return '' +
+            '<div class="p-3 rounded" style="background:#f8fafc;border:1px solid #e2e8f0;">' +
+            '<div class="d-flex justify-content-between mb-2"><span class="text-muted">Shipping Carbon</span><span class="fw-semibold">' + result.shippingCarbon + ' tonnes CO\u2082</span></div>' +
+            '<div class="d-flex justify-content-between mb-2"><span class="text-muted">Shipping Method</span><span class="fw-semibold">' + methodText + '</span></div>' +
+            '<div class="d-flex justify-content-between mb-2"><span class="text-muted">Distance</span><span class="fw-semibold">' + distanceText + '</span></div>' +
+            '<div class="d-flex justify-content-between mb-2"><span class="text-muted">Coefficient</span><span class="fw-semibold">' + coefficientText + '</span></div>' +
+            '<div class="mb-2"><span class="text-muted d-block">Calculation</span><span class="fw-semibold">' + result.formula + '</span></div>' +
+            '<div class="d-flex justify-content-between"><span class="text-muted">Timestamp</span><span class="fw-semibold">' + formatTimestamp(result.timestamp) + '</span></div>' +
+            '</div>';
+    }
+
+    function renderTotalSummary(result) {
+        return '' +
+            '<div class="p-3 rounded" style="background:#f8fafc;border:1px solid #e2e8f0;">' +
+            '<div class="d-flex justify-content-between mb-2"><span class="text-muted">Pre-Order Carbon</span><span class="fw-semibold">' + result.preOrderCarbon + ' tonnes CO\u2082</span></div>' +
+            '<div class="d-flex justify-content-between mb-2"><span class="text-muted">Shipping Carbon</span><span class="fw-semibold">' + result.shippingCarbon + ' tonnes CO\u2082</span></div>' +
+            '<div class="d-flex justify-content-between mb-2"><span class="text-muted">Total Carbon</span><span class="fw-semibold">' + result.totalCarbon + ' tonnes CO\u2082</span></div>' +
+            '<div class="mb-2"><span class="text-muted d-block">Calculation</span><span class="fw-semibold">' + result.formula + '</span></div>' +
+            '<div class="d-flex justify-content-between"><span class="text-muted">Timestamp</span><span class="fw-semibold">' + formatTimestamp(result.timestamp) + '</span></div>' +
+            '</div>';
+    }
+
+    function renderRouteSummary(result, type) {
+        var idLabel = type === 'outbound' ? 'Order ID' : 'Restock ID';
+        var idValue = type === 'outbound' ? result.orderID : result.restockID;
+        var routeIdLine = type === 'outbound' && result.customerRouteDistID
+            ? '<div class="d-flex justify-content-between mb-2"><span class="text-muted">Route Dist ID</span><span class="fw-semibold">' + result.customerRouteDistID + '</span></div>'
+            : '';
+
+        return '' +
+            '<div class="p-3 rounded" style="background:#f8fafc;border:1px solid #e2e8f0;">' +
+            '<div class="d-flex justify-content-between mb-2"><span class="text-muted">' + idLabel + '</span><span class="fw-semibold">' + idValue + '</span></div>' +
+            routeIdLine +
+            '<div class="d-flex justify-content-between mb-2"><span class="text-muted">Distance</span><span class="fw-semibold">' + (result.distanceKm != null ? result.distanceKm + ' km' : 'N/A') + '</span></div>' +
+            '<div class="d-flex justify-content-between mb-2"><span class="text-muted">Duration</span><span class="fw-semibold">' + (result.durationMin != null ? result.durationMin + ' min' : 'N/A') + '</span></div>' +
+            '<div class="d-flex justify-content-between"><span class="text-muted">Timestamp</span><span class="fw-semibold">' + formatTimestamp(result.timestamp) + '</span></div>' +
+            '</div>';
     }
 
     // ========== DASHBOARD ==========
@@ -59,6 +120,44 @@ var Carbon = (function ($) {
             $('#building-label').text(count === 1 ? 'facility' : 'facilities');
         }).fail(function () {
             $('#building-count').text('—');
+        });
+    }
+
+    function initRouteSummary() {
+        $('#dashboard-outbound-form').on('submit', function (e) {
+            e.preventDefault();
+            var btn = $(this).find('button[type="submit"]');
+            setLoading(btn, true);
+            var orderId = $('#dashboard-order-id').val();
+
+            $.get('/api/carbon/order/' + orderId + '/outbound-summary', function (summary) {
+                clearError('#dashboard-outbound-form');
+                $('#dashboard-outbound-result').html(renderRouteSummary(summary, 'outbound')).show();
+                setLoading(btn, false, 'Search');
+            }).fail(function (xhr) {
+                var message = xhr.responseJSON?.message || 'Invalid order ID.';
+                showError('#dashboard-outbound-form', message);
+                setLoading(btn, false, 'Search');
+                $('#dashboard-outbound-result').hide();
+            });
+        });
+
+        $('#dashboard-inbound-form').on('submit', function (e) {
+            e.preventDefault();
+            var btn = $(this).find('button[type="submit"]');
+            setLoading(btn, true);
+            var restockId = $('#dashboard-restock-id').val();
+
+            $.get('/api/carbon/restock/' + restockId + '/inbound-summary', function (summary) {
+                clearError('#dashboard-inbound-form');
+                $('#dashboard-inbound-result').html(renderRouteSummary(summary, 'inbound')).show();
+                setLoading(btn, false, 'Search');
+            }).fail(function (xhr) {
+                var message = xhr.responseJSON?.message || 'Invalid restock ID.';
+                showError('#dashboard-inbound-form', message);
+                setLoading(btn, false, 'Search');
+                $('#dashboard-inbound-result').hide();
+            });
         });
     }
 
@@ -255,25 +354,15 @@ var Carbon = (function ($) {
             var btn = $(this).find('button[type="submit"]');
             setLoading(btn, true);
             var orderId = $('#ship-order-id').val();
-            var country = $('#ship-order-country').val();
-            var postal = $('#ship-order-postal').val();
 
-            $.when(
-                $.get('/api/carbon/order/' + orderId + '/shipping'),
-                $.get('/api/carbon/order/' + orderId + '/total?countryCode=' + encodeURIComponent(country) + '&postalCode=' + encodeURIComponent(postal))
-            ).done(function (shippingRes, totalRes) {
-                var shipping = shippingRes[0];
-                var total = totalRes[0];
-                $('#order-result').html(
-                    '<div class="p-3 rounded" style="background:#f8fafc;border:1px solid #e2e8f0;">' +
-                    '<div class="d-flex justify-content-between mb-2"><span class="text-muted">Shipping Carbon</span><span class="fw-semibold">' + shipping.shippingCarbon + ' tonnes CO\u2082</span></div>' +
-                    '<div class="d-flex justify-content-between"><span class="text-muted">Total (incl. pre-shipment)</span><span class="fw-bold fs-5">' + total.totalCarbon + ' tonnes CO\u2082</span></div>' +
-                    '</div>'
-                ).show();
-                setLoading(btn, false, 'Calculate');
-            }).fail(function () {
-                showError('#order-lookup-form', 'Failed to look up order carbon.');
-                setLoading(btn, false, 'Calculate');
+            $.get('/api/carbon/order/' + orderId + '/shipping', function (shipping) {
+                clearError('#order-lookup-form');
+                $('#order-result').html(renderShippingBreakdown(shipping)).show();
+                setLoading(btn, false, 'Lookup');
+            }).fail(function (xhr) {
+                var message = xhr.responseJSON?.message || 'Invalid order ID.';
+                showError('#order-lookup-form', message);
+                setLoading(btn, false, 'Lookup');
                 $('#order-result').hide();
             });
         });
@@ -284,26 +373,52 @@ var Carbon = (function ($) {
             var btn = $(this).find('button[type="submit"]');
             setLoading(btn, true);
             var restockId = $('#ship-restock-id').val();
-            var country = $('#ship-restock-country').val();
-            var postal = $('#ship-restock-postal').val();
 
-            $.when(
-                $.get('/api/carbon/restock/' + restockId + '/shipping'),
-                $.get('/api/carbon/restock/' + restockId + '/total?countryCode=' + encodeURIComponent(country) + '&postalCode=' + encodeURIComponent(postal))
-            ).done(function (shippingRes, totalRes) {
-                var shipping = shippingRes[0];
-                var total = totalRes[0];
-                $('#restock-result').html(
-                    '<div class="p-3 rounded" style="background:#f8fafc;border:1px solid #e2e8f0;">' +
-                    '<div class="d-flex justify-content-between mb-2"><span class="text-muted">Shipping Carbon</span><span class="fw-semibold">' + shipping.shippingCarbon + ' tonnes CO\u2082</span></div>' +
-                    '<div class="d-flex justify-content-between"><span class="text-muted">Total (incl. pre-shipment)</span><span class="fw-bold fs-5">' + total.totalCarbon + ' tonnes CO\u2082</span></div>' +
-                    '</div>'
-                ).show();
-                setLoading(btn, false, 'Calculate');
-            }).fail(function () {
-                showError('#restock-lookup-form', 'Failed to look up restock carbon.');
-                setLoading(btn, false, 'Calculate');
+            $.get('/api/carbon/restock/' + restockId + '/shipping', function (shipping) {
+                clearError('#restock-lookup-form');
+                $('#restock-result').html(renderShippingBreakdown(shipping)).show();
+                setLoading(btn, false, 'Lookup');
+            }).fail(function (xhr) {
+                var message = xhr.responseJSON?.message || 'Invalid restock ID.';
+                showError('#restock-lookup-form', message);
+                setLoading(btn, false, 'Lookup');
                 $('#restock-result').hide();
+            });
+        });
+
+        $('#order-summary-form').on('submit', function (e) {
+            e.preventDefault();
+            var btn = $(this).find('button[type="submit"]');
+            setLoading(btn, true);
+            var orderId = $('#summary-order-id').val();
+
+            $.get('/api/carbon/order/' + orderId + '/summary', function (summary) {
+                clearError('#order-summary-form');
+                $('#order-summary-result').html(renderTotalSummary(summary)).show();
+                setLoading(btn, false, 'Lookup Summary');
+            }).fail(function (xhr) {
+                var message = xhr.responseJSON?.message || 'Invalid order ID.';
+                showError('#order-summary-form', message);
+                setLoading(btn, false, 'Lookup Summary');
+                $('#order-summary-result').hide();
+            });
+        });
+
+        $('#restock-summary-form').on('submit', function (e) {
+            e.preventDefault();
+            var btn = $(this).find('button[type="submit"]');
+            setLoading(btn, true);
+            var restockId = $('#summary-restock-id').val();
+
+            $.get('/api/carbon/restock/' + restockId + '/summary', function (summary) {
+                clearError('#restock-summary-form');
+                $('#restock-summary-result').html(renderTotalSummary(summary)).show();
+                setLoading(btn, false, 'Lookup Summary');
+            }).fail(function (xhr) {
+                var message = xhr.responseJSON?.message || 'Invalid restock ID.';
+                showError('#restock-summary-form', message);
+                setLoading(btn, false, 'Lookup Summary');
+                $('#restock-summary-result').hide();
             });
         });
 
@@ -415,6 +530,7 @@ var Carbon = (function ($) {
 
     return {
         initDashboard: initDashboard,
+        initRouteSummary: initRouteSummary,
         initEmployees: initEmployees,
         initBuildings: initBuildings,
         initShipping: initShipping,

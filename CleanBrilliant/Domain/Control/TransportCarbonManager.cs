@@ -1,6 +1,7 @@
 using CleanBrilliant.Domain.BoundaryInterface;
 using CleanBrilliant.Domain.DomainInterface;
 using CleanBrilliant.Services;
+using System.Data;
 using EntityRouteData = CleanBrilliant.Domain.Entity.RouteData;
 
 namespace CleanBrilliant.Domain.Control
@@ -13,8 +14,9 @@ namespace CleanBrilliant.Domain.Control
         private readonly ICarbonEntityFactory _factory;
         private readonly ISupplierTransportCarbonGateway _supplierTransportCarbonGateway;
         private readonly ICustomerTransportCarbonGateway _customerTransportCarbonGateway;
+        private readonly IOutboundDistributionGateway _outboundDistributionGateway;
+        private readonly IInboundLogisticsGateway _inboundLogisticsGateway;
         private readonly IShippingMethodGateway _shippingMethodGateway;
-        private readonly CarbonAnalysis _carbonAnalysis;
 
         public TransportCarbonManager(
             ICustomerDistanceService customerDistanceService,
@@ -23,8 +25,9 @@ namespace CleanBrilliant.Domain.Control
             ICarbonEntityFactory factory,
             ISupplierTransportCarbonGateway supplierTransportCarbonGateway,
             ICustomerTransportCarbonGateway customerTransportCarbonGateway,
-            IShippingMethodGateway shippingMethodGateway,
-            CarbonAnalysis carbonAnalysis)
+            IOutboundDistributionGateway outboundDistributionGateway,
+            IInboundLogisticsGateway inboundLogisticsGateway,
+            IShippingMethodGateway shippingMethodGateway)
         {
             _customerDistanceService = customerDistanceService;
             _restockDistanceService = restockDistanceService;
@@ -32,22 +35,21 @@ namespace CleanBrilliant.Domain.Control
             _factory = factory;
             _supplierTransportCarbonGateway = supplierTransportCarbonGateway;
             _customerTransportCarbonGateway = customerTransportCarbonGateway;
+            _outboundDistributionGateway = outboundDistributionGateway;
+            _inboundLogisticsGateway = inboundLogisticsGateway;
             _shippingMethodGateway = shippingMethodGateway;
-            _carbonAnalysis = carbonAnalysis;
         }
 
         public async Task<float> CalculateCustomerDistanceCarbon(string orderID, string shippingMethod)
         {
-            float distance = await _customerDistanceService.GetCustomerDistance(orderID);
-            float baseCarbon = _carbonAnalysis.EstimateShippingCarbon(shippingMethod, distance);
-            return ApplyConfiguredCoefficient(shippingMethod, baseCarbon);
+            float customerDistanceKm = await _customerDistanceService.GetCustomerDistance(orderID);
+            return CalculateCarbonFromDistance(customerDistanceKm, shippingMethod);
         }
 
         public async Task<float> CalculateSupplierDistanceCarbon(string restockID, string shippingMethod)
         {
-            float distance = await _restockDistanceService.GetRestockDistance(restockID);
-            float baseCarbon = _carbonAnalysis.EstimateShippingCarbon(shippingMethod, distance);
-            return ApplyConfiguredCoefficient(shippingMethod, baseCarbon);
+            float supplierDistanceKm = await _restockDistanceService.GetRestockDistance(restockID);
+            return CalculateCarbonFromDistance(supplierDistanceKm, shippingMethod);
         }
 
         public async Task LogCustomerEmission(string orderID, float distanceCarbon)
@@ -68,15 +70,14 @@ namespace CleanBrilliant.Domain.Control
             if (string.IsNullOrEmpty(shippingMethod))
                 shippingMethod = "truck";
 
-            float baseCarbon = _carbonAnalysis.EstimateShippingCarbon(shippingMethod, routeData.DistanceKm);
-            return ApplyConfiguredCoefficient(shippingMethod, baseCarbon);
+            return CalculateCarbonFromDistance(routeData.DistanceKm, shippingMethod);
         }
 
-        private float ApplyConfiguredCoefficient(string shippingMethod, float baseCarbon)
+        private float CalculateCarbonFromDistance(float distanceKm, string shippingMethod)
         {
             var normalizedMethod = NormalizeShippingMethod(shippingMethod);
             float configuredCoefficient = _coefficientManager.getEmission(normalizedMethod);
-            return baseCarbon * configuredCoefficient;
+            return distanceKm * configuredCoefficient;
         }
 
         private static string NormalizeShippingMethod(string shippingMethod)
@@ -97,11 +98,117 @@ namespace CleanBrilliant.Domain.Control
             return Convert.ToSingle(table.Rows[0]["carbon_amount"]);
         }
 
+        public async Task<(float ShippingCarbon, float? Timestamp)> GetOrderShippingCarbonRecord(string orderID)
+        {
+            var table = await _customerTransportCarbonGateway.FindBy(orderID);
+            if (table.Rows.Count == 0) return (0f, null);
+
+            var row = table.Rows[0];
+            var shippingCarbon = Convert.ToSingle(row["carbon_amount"]);
+            float? timestamp = row["timestamp"] == DBNull.Value ? null : Convert.ToSingle(row["timestamp"]);
+            return (shippingCarbon, timestamp);
+        }
+
+        public async Task<object?> GetOrderShippingBreakdown(string orderID)
+        {
+            var transportTable = await _customerTransportCarbonGateway.FindBy(orderID);
+            if (transportTable.Rows.Count == 0) return null;
+
+            var distanceTable = await _outboundDistributionGateway.FindBy(orderID);
+            return BuildShippingBreakdown(orderID, "order", transportTable.Rows[0], distanceTable.Rows.Count > 0 ? distanceTable.Rows[0] : null);
+        }
+
+        public async Task<object?> GetOutboundSummary(string orderID)
+        {
+            var table = await _outboundDistributionGateway.FindBy(orderID);
+            if (table.Rows.Count == 0) return null;
+
+            var row = table.Rows[0];
+            return new
+            {
+                orderID = Convert.ToString(row["order_id"]) ?? orderID,
+                customerRouteDistID = row.Table.Columns.Contains("customer_route_dist_id") && row["customer_route_dist_id"] != DBNull.Value
+                    ? Convert.ToString(row["customer_route_dist_id"])
+                    : null,
+                distanceKm = row["distance_km"] == DBNull.Value ? (float?)null : Convert.ToSingle(row["distance_km"]),
+                durationMin = row["duration_min"] == DBNull.Value ? (float?)null : Convert.ToSingle(row["duration_min"]),
+                timestamp = row.Table.Columns.Contains("timestamp") && row["timestamp"] != DBNull.Value
+                    ? Convert.ToSingle(row["timestamp"])
+                    : (float?)null
+            };
+        }
+
         public async Task<float> GetRestockShippingCarbon(string restockID)
         {
             var table = await _supplierTransportCarbonGateway.FindBy(restockID);
             if (table.Rows.Count == 0) return 0f;
             return Convert.ToSingle(table.Rows[0]["carbon_amount"]);
+        }
+
+        public async Task<(float ShippingCarbon, float? Timestamp)> GetRestockShippingCarbonRecord(string restockID)
+        {
+            var table = await _supplierTransportCarbonGateway.FindBy(restockID);
+            if (table.Rows.Count == 0) return (0f, null);
+
+            var row = table.Rows[0];
+            var shippingCarbon = Convert.ToSingle(row["carbon_amount"]);
+            float? timestamp = row["timestamp"] == DBNull.Value ? null : Convert.ToSingle(row["timestamp"]);
+            return (shippingCarbon, timestamp);
+        }
+
+        public async Task<object?> GetRestockShippingBreakdown(string restockID)
+        {
+            var transportTable = await _supplierTransportCarbonGateway.FindBy(restockID);
+            if (transportTable.Rows.Count == 0) return null;
+
+            var distanceTable = await _inboundLogisticsGateway.FindBy(restockID);
+            return BuildShippingBreakdown(restockID, "restock", transportTable.Rows[0], distanceTable.Rows.Count > 0 ? distanceTable.Rows[0] : null);
+        }
+
+        public async Task<object?> GetInboundSummary(string restockID)
+        {
+            var table = await _inboundLogisticsGateway.FindBy(restockID);
+            if (table.Rows.Count == 0) return null;
+
+            var row = table.Rows[0];
+            return new
+            {
+                restockID = Convert.ToString(row["restock_id"]) ?? restockID,
+                distanceKm = row["distance_km"] == DBNull.Value ? (float?)null : Convert.ToSingle(row["distance_km"]),
+                durationMin = row["duration_min"] == DBNull.Value ? (float?)null : Convert.ToSingle(row["duration_min"]),
+                timestamp = row.Table.Columns.Contains("timestamp") && row["timestamp"] != DBNull.Value
+                    ? Convert.ToSingle(row["timestamp"])
+                    : (float?)null
+            };
+        }
+
+        private object BuildShippingBreakdown(string referenceID, string type, DataRow transportRow, DataRow? distanceRow)
+        {
+            var method = transportRow.Table.Columns.Contains("shipping_method") && transportRow["shipping_method"] != DBNull.Value
+                ? Convert.ToString(transportRow["shipping_method"]) ?? "Unknown"
+                : "Unknown";
+
+            float shippingCarbon = Convert.ToSingle(transportRow["carbon_amount"]);
+            float? timestamp = transportRow["timestamp"] == DBNull.Value ? null : Convert.ToSingle(transportRow["timestamp"]);
+            float? distanceKm = distanceRow == null || distanceRow["distance_km"] == DBNull.Value
+                ? null
+                : Convert.ToSingle(distanceRow["distance_km"]);
+            float? coefficient = method == "Unknown" ? null : _coefficientManager.getEmission(NormalizeShippingMethod(method));
+            var formula = distanceKm.HasValue && coefficient.HasValue
+                ? $"{distanceKm.Value:0.##} km × {coefficient.Value:0.####} = {shippingCarbon:0.##} tonnes CO2"
+                : "Distance or shipping method data not available for a full breakdown.";
+
+            return new
+            {
+                referenceID,
+                type,
+                shippingMethod = method,
+                distanceKm,
+                coefficient,
+                shippingCarbon,
+                timestamp,
+                formula
+            };
         }
 
         public async Task SaveShippingMethod(string shippingMethod)

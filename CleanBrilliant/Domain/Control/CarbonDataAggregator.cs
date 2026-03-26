@@ -52,6 +52,74 @@ namespace CleanBrilliant.Domain.Control
             return totalCarbon;
         }
 
+        public async Task<(float TotalCarbon, float? Timestamp)> GetOrderCarbonSummary(string orderID)
+        {
+            var table = await _customerCarbonDataGateway.FindBy(orderID);
+            if (table.Rows.Count == 0) return (0f, null);
+
+            var row = table.Rows[0];
+            var totalCarbon = Convert.ToSingle(row["carbon_amount"]);
+            float? timestamp = row["timestamp"] == DBNull.Value ? null : Convert.ToSingle(row["timestamp"]);
+            return (totalCarbon, timestamp);
+        }
+
+        public async Task<object?> GetOrderCarbonSummaryBreakdown(string orderID)
+        {
+            var summary = await GetOrderCarbonSummary(orderID);
+            if (summary.Timestamp == null)
+            {
+                return null;
+            }
+
+            int parsedId = int.TryParse(orderID, out int id) ? id : 0;
+            var preShipmentData = _preShipmentCarbonReader.GetPreShipmentCarbonData(parsedId);
+            float preOrderCarbon = preShipmentData?.TotalPreShipmentCarbon ?? 0f;
+            float shippingCarbon = await _getCarbonData.GetOrderShippingCarbon(orderID);
+
+            return new
+            {
+                orderID,
+                preOrderCarbon,
+                shippingCarbon,
+                totalCarbon = summary.TotalCarbon,
+                timestamp = summary.Timestamp,
+                formula = $"{preOrderCarbon:0.##} + {shippingCarbon:0.##} = {summary.TotalCarbon:0.##} tonnes CO2"
+            };
+        }
+
+        public async Task<(float TotalCarbon, float? Timestamp)> GetRestockCarbonSummary(string restockID)
+        {
+            var table = await _supplierCarbonDataGateway.FindBy(restockID);
+            if (table.Rows.Count == 0) return (0f, null);
+
+            var row = table.Rows[0];
+            var totalCarbon = Convert.ToSingle(row["carbon_amount"]);
+            float? timestamp = row["timestamp"] == DBNull.Value ? null : Convert.ToSingle(row["timestamp"]);
+            return (totalCarbon, timestamp);
+        }
+
+        public async Task<object?> GetRestockCarbonSummaryBreakdown(string restockID)
+        {
+            var summary = await GetRestockCarbonSummary(restockID);
+            if (summary.Timestamp == null)
+            {
+                return null;
+            }
+
+            float preOrderCarbon = 0f;
+            float shippingCarbon = await _getCarbonData.GetRestockShippingCarbon(restockID);
+
+            return new
+            {
+                restockID,
+                preOrderCarbon,
+                shippingCarbon,
+                totalCarbon = summary.TotalCarbon,
+                timestamp = summary.Timestamp,
+                formula = $"{preOrderCarbon:0.##} + {shippingCarbon:0.##} = {summary.TotalCarbon:0.##} tonnes CO2"
+            };
+        }
+
         public async Task<List<float>> GetCarbonLogs()
         {
             var results = new List<float>();
