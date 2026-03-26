@@ -13,7 +13,8 @@ namespace CleanBrilliant.Stubs
                 OrderId = orderID,
                 ManufacturingCarbon = 5.0f,
                 PackagingCarbon = 2.0f,
-                TotalPreShipmentCarbon = 7.0f
+                ShipmentCF = 1.0f,
+                TotalPreShipmentCarbon = 8.0f
             };
         }
     }

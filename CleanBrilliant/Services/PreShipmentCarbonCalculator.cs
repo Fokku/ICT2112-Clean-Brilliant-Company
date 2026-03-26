@@ -67,13 +67,16 @@ namespace CleanBrilliant.Services
             SetStrategy(new StorageCF());
             result.StorageCF = CalculateCarbon(dto);
 
+            // TODO: Implement ShipmentCF calculation
+            result.ShipmentCF = 0.0f;
+
             return result;
         }
 
         public void CreatePreShipmentCarbonData(PreShipmentDetailDTO dto)
         {
             var carbonData = CalculateAll(dto);
-            _gateway.Insert(TableName, carbonData.OrderId, carbonData.TimeStamp, carbonData.ProductCF, carbonData.StorageCF, carbonData.PackagingCF);
+            _gateway.Insert(TableName, carbonData.OrderId, carbonData.TimeStamp, carbonData.ProductCF, carbonData.StorageCF, carbonData.PackagingCF, carbonData.ShipmentCF);
         }
 
         public PreShipmentCarbonDataDTO? GetPreShipmentCarbonData(int orderId)
@@ -90,7 +93,8 @@ namespace CleanBrilliant.Services
                 TimeStamp = Convert.ToDateTime(row["time_stamp"]),
                 ProductCF = Convert.ToSingle(row["product_cf"]),
                 StorageCF = Convert.ToSingle(row["storage_cf"]),
-                PackagingCF = Convert.ToSingle(row["packaging_cf"])
+                PackagingCF = Convert.ToSingle(row["packaging_cf"]),
+                ShipmentCF = Convert.ToSingle(row["shipment_cf"])
             };
         }
 
@@ -110,7 +114,8 @@ namespace CleanBrilliant.Services
                     TimeStamp = Convert.ToDateTime(row["time_stamp"]),
                     ProductCF = Convert.ToSingle(row["product_cf"]),
                     StorageCF = Convert.ToSingle(row["storage_cf"]),
-                    PackagingCF = Convert.ToSingle(row["packaging_cf"])
+                    PackagingCF = Convert.ToSingle(row["packaging_cf"]),
+                    ShipmentCF = Convert.ToSingle(row["shipment_cf"])
                 });
             }
 
