@@ -41,7 +41,7 @@ builder.Services.AddScoped<IProductDetailReader, ProductCalculator>();
 builder.Services.AddScoped<PreShipmentCarbonCalculator>();
 builder.Services.AddScoped<CleanBrilliant.Data.Interfaces.IPreShipmentCarbonReader>(sp => sp.GetRequiredService<PreShipmentCarbonCalculator>());
 builder.Services.AddScoped<IPreShipmentCarbonWriter>(sp => sp.GetRequiredService<PreShipmentCarbonCalculator>());
-builder.Services.AddScoped<CleanBrilliant.Domain.DomainInterface.IPreShipmentCarbonReader>(sp => sp.GetRequiredService<PreShipmentCarbonCalculator>());
+builder.Services.AddScoped<IPreShipmentCarbonReader>(sp => sp.GetRequiredService<PreShipmentCarbonCalculator>());
 
 // Register Analytics
 builder.Services.AddScoped<IAggregatedData, Co2AnalyticsControl>();

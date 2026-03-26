@@ -1,3 +1,4 @@
+using CleanBrilliant.Data.Interfaces;
 using CleanBrilliant.Domain.BoundaryInterface;
 using CleanBrilliant.Domain.DomainInterface;
 
@@ -28,7 +29,7 @@ namespace CleanBrilliant.Domain.Control
         public async Task<float> GetOrderCarbon(string orderID, string countryCode, string postalCode, ICarbonEntityFactory factory)
         {
             int parsedId = int.TryParse(orderID, out int id) ? id : 0;
-            var preShipmentData = await _preShipmentCarbonReader.GetPreShipmentCarbonData(parsedId);
+            var preShipmentData =  _preShipmentCarbonReader.GetPreShipmentCarbonData(parsedId);
             float preShipmentCarbon = preShipmentData?.TotalPreShipmentCarbon ?? 0f;
 
             float shippingCarbon = await _getCarbonData.GetOrderShippingCarbon(orderID);

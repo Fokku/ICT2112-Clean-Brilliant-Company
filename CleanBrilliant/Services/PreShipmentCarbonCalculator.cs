@@ -1,6 +1,6 @@
 using System.Data;
 using CleanBrilliant.Data.Interfaces;
-using CleanBrilliant.DataSource.Gateways;
+using CleanBrilliant.Data.Gateways;
 using CleanBrilliant.DTO;
 using CleanBrilliant.Models.CarbonStrategies;
 using CleanBrilliant.Models.Interfaces;
@@ -8,14 +8,13 @@ using CleanBrilliant.Interfaces;
 
 namespace CleanBrilliant.Services
 {
-    public class PreShipmentCarbonCalculator : IPreShipmentCarbonReader, IPreShipmentCarbonWriter, CleanBrilliant.Domain.DomainInterface.IPreShipmentCarbonReader
+    public class PreShipmentCarbonCalculator : IPreShipmentCarbonReader, IPreShipmentCarbonWriter
     {
         private ICarbonFootprintStrategy _strategy;
         private readonly PreShipmentGateway _gateway;
-        private readonly IProductDetailReader _productReader; // 1. Add the interface
+        private readonly IProductDetailReader _productReader;
         private const string TableName = "pre_shipment_carbon_data"; 
 
-        // 2. Inject it into the constructor
         public PreShipmentCarbonCalculator(PreShipmentGateway gateway, IProductDetailReader productReader)
         {
             _strategy = new ProductCF();
@@ -30,13 +29,11 @@ namespace CleanBrilliant.Services
 
         public float CalculateCarbon(PreShipmentDetailDTO dto)
         {
-            // 3. Intercept the ProductCF calculation to use the Database Reader
             if (_strategy is ProductCF)
             {
                 float totalProductCarbon = 0f;
                 foreach (var item in dto.ProductOrderDetailList)
                 {
-                    // Fetch the saved calculation from the Toxic Analyzer module!
                     var detail = _productReader.GetProductDetail(item.ProductID);
                     if (detail != null)
                     {
@@ -46,7 +43,6 @@ namespace CleanBrilliant.Services
                 return totalProductCarbon;
             }
 
-            // For PackagingCF and StorageCF, fall back to the normal strategy math
             return _strategy.CalculateCarbon(dto);
         }
 
@@ -55,7 +51,8 @@ namespace CleanBrilliant.Services
             var result = new PreShipmentCarbonDataDTO
             {
                 OrderId = dto.OrderId,
-                TimeStamp = dto.TimeStamp
+                TimeStamp = dto.TimeStamp,
+                ShipmentCF = dto.ShipmentCF ?? 0f // Map the optional value, default to 0
             };
 
             SetStrategy(new ProductCF());
@@ -73,7 +70,8 @@ namespace CleanBrilliant.Services
         public void CreatePreShipmentCarbonData(PreShipmentDetailDTO dto)
         {
             var carbonData = CalculateAll(dto);
-            _gateway.Insert(TableName, carbonData.OrderId, carbonData.TimeStamp, carbonData.ProductCF, carbonData.StorageCF, carbonData.PackagingCF);
+            // Pass the new ShipmentCF to the gateway
+            _gateway.Insert(TableName, carbonData.OrderId, carbonData.TimeStamp, carbonData.ProductCF, carbonData.StorageCF, carbonData.PackagingCF, carbonData.ShipmentCF);
         }
 
         public PreShipmentCarbonDataDTO? GetPreShipmentCarbonData(int orderId)
@@ -90,7 +88,8 @@ namespace CleanBrilliant.Services
                 TimeStamp = Convert.ToDateTime(row["time_stamp"]),
                 ProductCF = Convert.ToSingle(row["product_cf"]),
                 StorageCF = Convert.ToSingle(row["storage_cf"]),
-                PackagingCF = Convert.ToSingle(row["packaging_cf"])
+                PackagingCF = Convert.ToSingle(row["packaging_cf"]),
+                ShipmentCF = row["shipment_cf"] != DBNull.Value ? Convert.ToSingle(row["shipment_cf"]) : 0f
             };
         }
 
@@ -110,21 +109,12 @@ namespace CleanBrilliant.Services
                     TimeStamp = Convert.ToDateTime(row["time_stamp"]),
                     ProductCF = Convert.ToSingle(row["product_cf"]),
                     StorageCF = Convert.ToSingle(row["storage_cf"]),
-                    PackagingCF = Convert.ToSingle(row["packaging_cf"])
+                    PackagingCF = Convert.ToSingle(row["packaging_cf"]),
+                    ShipmentCF = row["shipment_cf"] != DBNull.Value ? Convert.ToSingle(row["shipment_cf"]) : 0f
                 });
             }
 
             return results;
-        }
-
-        async Task<PreShipmentCarbonDataDTO> CleanBrilliant.Domain.DomainInterface.IPreShipmentCarbonReader.GetPreShipmentCarbonData(int orderID)
-        {
-            await Task.CompletedTask;
-
-            return GetPreShipmentCarbonData(orderID) ?? new PreShipmentCarbonDataDTO
-            {
-                OrderId = orderID
-            };
         }
     }
 }

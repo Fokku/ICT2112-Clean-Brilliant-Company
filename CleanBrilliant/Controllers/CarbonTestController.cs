@@ -24,7 +24,7 @@ namespace CleanBrilliant.Controllers
         }
 
         [HttpPost]
-        public IActionResult InjectDummyData(int orderId, DateTime timeStamp, int qty101, int qty102, int packageQty, string receivedDates)
+        public IActionResult InjectDummyData(int orderId, DateTime timeStamp, int qty101, int qty102, int? customProductId, int? customProductQty, int packageQty, string receivedDates, float? shipmentCf)
         {
             try
             {
@@ -34,21 +34,18 @@ namespace CleanBrilliant.Controllers
                     TimeStamp = timeStamp,
                     PackageQuantity = packageQty,
                     ProductOrderDetailList = new List<ProductOrderDetailDTO>(),
-                    ReceivedDateList = new List<DateTime>()
+                    ReceivedDateList = new List<DateTime>(),
+                    ShipmentCF = shipmentCf // Pass it to the DTO
                 };
 
-                // Explicitly map the quantities to the correct Product IDs
-                if (qty101 > 0)
+                if (qty101 > 0) dto.ProductOrderDetailList.Add(new ProductOrderDetailDTO { ProductID = 101, Quantity = qty101 });
+                if (qty102 > 0) dto.ProductOrderDetailList.Add(new ProductOrderDetailDTO { ProductID = 102, Quantity = qty102 });
+
+                if (customProductId.HasValue && customProductQty.HasValue && customProductQty.Value > 0)
                 {
-                    dto.ProductOrderDetailList.Add(new ProductOrderDetailDTO { ProductID = 101, Quantity = qty101 });
+                    dto.ProductOrderDetailList.Add(new ProductOrderDetailDTO { ProductID = customProductId.Value, Quantity = customProductQty.Value });
                 }
 
-                if (qty102 > 0)
-                {
-                    dto.ProductOrderDetailList.Add(new ProductOrderDetailDTO { ProductID = 102, Quantity = qty102 });
-                }
-
-                // Parse Received Dates (e.g., "2026-03-01, 2026-03-05") into the DTO List
                 if (!string.IsNullOrWhiteSpace(receivedDates))
                 {
                     var ds = receivedDates.Split(',');
@@ -60,20 +57,20 @@ namespace CleanBrilliant.Controllers
                         }
                     }
                 }
-                // Write to database (Calculations happen here via your Calculator)
+
                 _writer.CreatePreShipmentCarbonData(dto);
 
-                // Instantly read it back to display the calculated math
                 var savedData = _reader.GetPreShipmentCarbonData(orderId);
 
                 if (savedData != null)
                 {
                     TempData["SuccessMsg"] = $"Order {orderId} processed successfully!";
-                    TempData["OutputResults"] =
+                    TempData["OutputResults"] = 
                         $"[CALCULATION OUTPUT]\n" +
                         $"Product CF: {savedData.ProductCF} kg\n" +
                         $"Storage CF: {savedData.StorageCF} kg\n" +
                         $"Packaging CF: {savedData.PackagingCF} kg\n" +
+                        $"Shipment CF: {savedData.ShipmentCF} kg (Debug Override)\n" +
                         $"TOTAL CF: {savedData.TotalCF} kg";
                 }
                 else
@@ -85,7 +82,7 @@ namespace CleanBrilliant.Controllers
             {
                 TempData["ErrorMsg"] = $"Error saving data: {ex.Message}";
             }
-
+            
             return RedirectToAction("Index");
         }
 
@@ -101,7 +98,7 @@ namespace CleanBrilliant.Controllers
                     return RedirectToAction("Index");
                 }
 
-                TempData["FetchResult"] = $"Order {data.OrderId} | Time: {data.TimeStamp:yyyy-MM-dd} | Prod CF: {data.ProductCF} | Pkg CF: {data.PackagingCF} | Store CF: {data.StorageCF} | TOTAL: {data.TotalCF}";
+                TempData["FetchResult"] = $"Order {data.OrderId} | Time: {data.TimeStamp:yyyy-MM-dd} | Prod CF: {data.ProductCF} | Pkg CF: {data.PackagingCF} | Store CF: {data.StorageCF} | Ship CF: {data.ShipmentCF} | TOTAL: {data.TotalCF}";
             }
             catch (Exception ex)
             {
