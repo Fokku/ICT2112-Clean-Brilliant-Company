@@ -17,8 +17,10 @@
                 <div class="card-body">
                     
                     <div class="d-flex gap-2 mb-4">
-                        <button type="button" class="btn btn-sm btn-warning fw-bold flex-fill" onclick="loadToxicDemo()">Load Demo: Toxic (ID: 101)</button>
-                        <button type="button" class="btn btn-sm btn-success fw-bold flex-fill" onclick="loadEcoDemo()">Load Demo: Eco (ID: 102)</button>
+                        <button type="button" class="btn btn-sm btn-warning fw-bold flex-fill"
+                                onclick="loadToxicDemo()">Load Demo: Toxic (ID: 101)</button>
+                        <button type="button" class="btn btn-sm btn-success fw-bold flex-fill"
+                                onclick="loadEcoDemo()">Load Demo: Eco (ID: 102)</button>
                     </div>
 
                     <form asp-controller="ToxicAnalyzer" asp-action="Calculate" method="post">
@@ -39,18 +41,22 @@
                         <div id="ingredients-container">
                             <div class="row mb-2 ingredient-row">
                                 <div class="col-5">
-                                    <input type="text" name="ingredients[0].Name" class="form-control form-control-sm" placeholder="Name" required />
+                                    <input type="text" name="ingredients[0].Name" class="form-control form-control-sm"
+                                           placeholder="Name" required />
                                 </div>
                                 <div class="col-3">
-                                    <input type="number" step="0.01" name="ingredients[0].Volume" class="form-control form-control-sm" placeholder="Vol" required />
+                                    <input type="number" step="0.01" name="ingredients[0].Volume"
+                                           class="form-control form-control-sm" placeholder="Vol" required />
                                 </div>
                                 <div class="col-4">
-                                    <input type="number" step="0.01" name="ingredients[0].ToxicityScore" class="form-control form-control-sm" placeholder="Tox. Score" required />
+                                    <input type="number" step="0.01" name="ingredients[0].ToxicityScore"
+                                           class="form-control form-control-sm" placeholder="Tox. Score" required />
                                 </div>
                             </div>
                         </div>
 
-                        <button type="button" class="btn btn-sm btn-outline-secondary mb-3 mt-1" onclick="addBlankIngredientRow()">+ Add Blank Ingredient</button>
+                        <button type="button" class="btn btn-sm btn-outline-secondary mb-3 mt-1"
+                                onclick="addBlankIngredientRow()">+ Add Blank Ingredient</button>
 
                         <div class="d-grid mt-2">
                             <button type="submit" class="btn btn-primary btn-lg">Run Analysis & Save</button>
@@ -91,175 +97,234 @@
                                 <div class="mt-2 text-muted" style="font-size: 0.8rem;">(Threshold: Less Than 0.25 kg)</div>
                             </div>
                         </div>
-                        <p class="mt-4 small text-muted">Calculated & Saved on: @writeResult.CalculationDate.ToString("g")</p>
+                        <p class="mt-4 small text-muted">Calculated & Saved on: @writeResult.CalculationDate.ToString("g")
+                        </p>
 
                         <div class="mt-auto pt-4">
                             <div class="text-start bg-light p-3 rounded small text-muted border">
                                 <h6 class="fw-bold text-dark mb-1">How it was calculated:</h6>
                                 <ul class="mb-0 ps-3">
-                                    <li><strong>Toxic %:</strong> Weighted average of each ingredient's toxicity score relative to the total product volume.</li>
-                                    <li><strong>Carbon:</strong> Base emission of 0.0005 kg per ml, plus a penalty multiplier based on the calculated Toxic %.</li>
-                                </ul>
+                                    <li><strong>Toxic %:</strong> Weighted average of each ingredient's toxicity score
+                                        relative to the total product volume.</li>
+                                        <li><strong>Carbon:</strong> Base emission of 0.0005 kg per ml, plus a penalty
+                                            multiplier based on the calculated Toxic %.</li>
+                                        </ul>
+                                    </div>
+                                </div>
                             </div>
                         </div>
-                    </div>
-                </div>
-            }
+                    }
             else
-            {
-                <div class="card shadow-sm h-100 bg-light border-0">
-                    <div class="card-body d-flex flex-column align-items-center justify-content-center text-muted p-4">
-                        <p class="mb-4"><em>Fill out the form and calculate to see results here.</em></p>
+                    {
+                        <div class="card shadow-sm h-100 bg-light border-0">
+                            <div class="card-body d-flex flex-column align-items-center justify-content-center text-muted p-4">
+                                <p class="mb-4"><em>Fill out the form and calculate to see results here.</em></p>
 
-                        <div class="text-start bg-white p-4 rounded shadow-sm small w-100 border">
-                            <h6 class="fw-bold text-primary mb-3">Analyzer Logic Formulas</h6>
-                            <ul class="mb-0 ps-3 text-muted" style="line-height: 1.6;">
-                                <li class="mb-3">
-                                    <strong class="text-dark">Toxic %</strong> <br/>
-                                    <code>[ &Sigma; (Ingredient Volume &times; Toxicity Score) / Total Volume ] &times; 100</code>
-                                </li>
-                                <li class="mb-3">
-                                    <strong class="text-dark">Carbon Footprint (kg)</strong> <br/>
-                                    <code>(Total Volume &times; 0.0005) &times; (1 + [Toxic % / 100])</code>
-                                </li>
-                                <li>
-                                    <strong class="text-dark">Eco-Friendly Status</strong> <br/>
-                                    <code>Carbon Footprint Less Than 0.25 kg</code>
-                                </li>
-                            </ul>
-                        </div>
-                    </div>
-                </div>
-            }
-        </div>
-    </div>
-
-
-    <div class="p-4 bg-light rounded border">
-        <h4 class="mb-4 text-secondary fw-bold">2. Database Reader Test (Read)</h4>
-        
-        <div class="row">
-            <div class="col-md-6">
-                <div class="card shadow-sm border-secondary h-100">
-                    <div class="card-header bg-secondary text-white">
-                        <h5 class="mb-0">Fetch Saved Product</h5>
-                    </div>
-                    <div class="card-body d-flex flex-column justify-content-center">
-                        @if (TempData["SearchError"] != null)
-                        {
-                            <div class="alert alert-warning py-2">@TempData["SearchError"]</div>
-                        }
-                        
-                        <p class="text-muted small">Select a product ID to fetch its saved data directly from the PostgreSQL database using the IProductDetailReader interface.</p>
-                        
-                        <form asp-controller="ToxicAnalyzer" asp-action="Read" method="get">
-                            <div class="input-group">
-                                <select name="searchProductId" class="form-select border-secondary" required>
-                                    <option value="">-- Select Product ID --</option>
-                                    <option value="101">Product 101 (Toxic Demo)</option>
-                                    <option value="102">Product 102 (Eco-Friendly Demo)</option>
-                                </select>
-                                <button type="submit" class="btn btn-secondary px-4 fw-bold">Fetch Data</button>
-                            </div>
-                        </form>
-                    </div>
-                </div>
-            </div>
-
-            <div class="col-md-6">
-                @if (readResult != null)
-                {
-                    <div class="card shadow-sm border-secondary h-100">
-                        <div class="card-body text-center d-flex flex-column justify-content-center">
-                            <span class="badge bg-secondary mb-2 mx-auto">FETCHED FROM DATABASE</span>
-                            <p class="text-muted mb-1">Product ID: @readResult.ProductID</p>
-                            <h2 class="display-5 text-dark fw-bold">@readResult.ToxicPercentage.ToString("0.##")%</h2>
-                            
-                            <hr class="w-50 mx-auto my-2" />
-                            
-                            <div class="d-flex justify-content-around align-items-center mt-2">
-                                <div>
-                                    <h4 class="mb-0 fw-bold">@readResult.Carbon.ToString("0.####") kg</h4>
-                                </div>
-                                <div>
-                                    @if (readResult.EcoFriendly)
-                                    {
-                                        <span class="badge text-bg-success p-2">Eco Friendly</span>
-                                    }
-                                    else
-                                    {
-                                        <span class="badge text-bg-danger p-2">Not Eco Friendly</span>
-                                    }
+                                <div class="text-start bg-white p-4 rounded shadow-sm small w-100 border">
+                                    <h6 class="fw-bold text-primary mb-3">Analyzer Logic Formulas</h6>
+                                    <ul class="mb-0 ps-3 text-muted" style="line-height: 1.6;">
+                                        <li class="mb-3">
+                                            <strong class="text-dark">Toxic %</strong> <br />
+                                            <code>[ &Sigma; (Ingredient Volume &times; Toxicity Score) / Total Volume ] &times; 100</code>
+                                        </li>
+                                        <li class="mb-3">
+                                            <strong class="text-dark">Carbon Footprint (kg)</strong> <br />
+                                            <code>(Total Volume &times; 0.0005) &times; (1 + [Toxic % / 100])</code>
+                                        </li>
+                                        <li>
+                                            <strong class="text-dark">Eco-Friendly Status</strong> <br />
+                                            <code>Carbon Footprint Less Than 0.25 kg</code>
+                                        </li>
+                                    </ul>
                                 </div>
                             </div>
                         </div>
-                    </div>
-                }
-                else
-                {
-                    <div class="card shadow-sm h-100 border-0" style="background-color: #e9ecef;">
-                        <div class="card-body d-flex align-items-center justify-content-center text-muted">
-                            <em>Fetched database records will appear here.</em>
+                    }
+                </div>
+            </div>
+
+
+            <div class="p-4 bg-light rounded border">
+                <h4 class="mb-4 text-secondary fw-bold">2. Database Reader Test (Read)</h4>
+        
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="card shadow-sm border-secondary h-100">
+                            <div class="card-header bg-secondary text-white">
+                                <h5 class="mb-0">Fetch Saved Product</h5>
+                            </div>
+                            <div class="card-body d-flex flex-column justify-content-center">
+                                @if (TempData["SearchError"] != null)
+                                {
+                                    <div class="alert alert-warning py-2">@TempData["SearchError"]</div>
+                                }
+                        
+                                <p class="text-muted small">Select a product ID to fetch its saved data directly from the
+                                    PostgreSQL database using the IProductDetailReader interface.</p>
+                                    <form asp-controller="ToxicAnalyzer" asp-action="Read" method="get"
+                                          onsubmit="return prepareSearch()">
+                                        <input type="hidden" name="searchProductId" id="finalSearchId" />
+
+                                        <div class="mb-3 text-start">
+                                            <div class="form-check mb-2">
+                                                <input class="form-check-input border-secondary" type="radio" name="readOption"
+                                                       id="radio101" value="101" checked onchange="toggleCustomSearch()">
+                                                <label class="form-check-label" for="radio101"><strong>Product 101</strong> (Toxic
+                                                    Demo)</label>
+                                                </div>
+                                                <div class="form-check mb-2">
+                                                    <input class="form-check-input border-secondary" type="radio" name="readOption"
+                                                           id="radio102" value="102" onchange="toggleCustomSearch()">
+                                                    <label class="form-check-label" for="radio102"><strong>Product 102</strong>
+                                                        (Eco-Friendly Demo)</label>
+                                                    </div>
+                                                    <div class="form-check mb-2">
+                                                        <input class="form-check-input border-secondary" type="radio" name="readOption"
+                                                               id="radioCustom" value="custom" onchange="toggleCustomSearch()">
+                                                        <label class="form-check-label" for="radioCustom"><strong>Custom ID</strong> (Free
+                                                            Text)</label>
+                                                        </div>
+                                                    </div>
+
+                                                    <div class="input-group">
+                                                        <input type="number" id="customSearchInput" class="form-control border-secondary"
+                                                               placeholder="Enter Product ID to fetch..." disabled />
+                                                        <button type="submit" class="btn btn-secondary px-4 fw-bold">Fetch Data</button>
+                                                    </div>
+                                                </form>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div class="col-md-6">
+                                        @if (readResult != null)
+                                        {
+                                            <div class="card shadow-sm border-secondary h-100">
+                                                <div class="card-body text-center d-flex flex-column justify-content-center">
+                                                    <span class="badge bg-secondary mb-2 mx-auto">FETCHED FROM DATABASE</span>
+                                                    <p class="text-muted mb-1">Product ID: @readResult.ProductID</p>
+                                                    <h2 class="display-5 text-dark fw-bold">@readResult.ToxicPercentage.ToString("0.##")%</h2>
+                            
+                                                    <hr class="w-50 mx-auto my-2" />
+                            
+                                                    <div class="d-flex justify-content-around align-items-center mt-2">
+                                                        <div>
+                                                            <h4 class="mb-0 fw-bold">@readResult.Carbon.ToString("0.####") kg</h4>
+                                                        </div>
+                                                        <div>
+                                                            @if (readResult.EcoFriendly)
+                                                            {
+                                                                <span class="badge text-bg-success p-2">Eco Friendly</span>
+                                                            }
+                                                            else
+                                                            {
+                                                                <span class="badge text-bg-danger p-2">Not Eco Friendly</span>
+                                                            }
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        }
+                                        else
+                                        {
+                                            <div class="card shadow-sm h-100 border-0" style="background-color: #e9ecef;">
+                                                <div class="card-body d-flex align-items-center justify-content-center text-muted">
+                                                    <em>Fetched database records will appear here.</em>
+                                                </div>
+                                            </div>
+                                        }
+                                    </div>
+                                </div>
+                            </div>
                         </div>
-                    </div>
-                }
-            </div>
-        </div>
-    </div>
-</div>
 
-<script>
-    let ingredientIndex = 1;
+                        <script>
+                            let ingredientIndex = 1;
 
-    function addBlankIngredientRow() {
-        addIngredientRow("", "", "");
-    }
+                            function addBlankIngredientRow() {
+                                addIngredientRow("", "", "");
+                            }
 
-    function addIngredientRow(nameVal, volVal, toxVal) {
-        const container = document.getElementById('ingredients-container');
-        const rowHTML = `
-            <div class="row mb-2 ingredient-row">
-                <div class="col-5">
-                    <input type="text" name="ingredients[${ingredientIndex}].Name" class="form-control form-control-sm" placeholder="Name" value="${nameVal}" required />
-                </div>
-                <div class="col-3">
-                    <input type="number" step="0.01" name="ingredients[${ingredientIndex}].Volume" class="form-control form-control-sm" placeholder="Vol" value="${volVal}" required />
-                </div>
-                <div class="col-4">
-                    <input type="number" step="0.01" name="ingredients[${ingredientIndex}].ToxicityScore" class="form-control form-control-sm" placeholder="Tox. Score" value="${toxVal}" required />
-                </div>
-            </div>
-        `;
-        container.insertAdjacentHTML('beforeend', rowHTML);
-        ingredientIndex++;
-    }
+                            function addIngredientRow(nameVal, volVal, toxVal) {
+                                const container = document.getElementById('ingredients-container');
+                                const rowHTML = `
+                                                            <div class="row mb-2 ingredient-row">
+                                                                <div class="col-5">
+                                                                    <input type="text" name="ingredients[${ingredientIndex}].Name" class="form-control form-control-sm" placeholder="Name" value="${nameVal}" required />
+                                                                </div>
+                                                                <div class="col-3">
+                                                                    <input type="number" step="0.01" name="ingredients[${ingredientIndex}].Volume" class="form-control form-control-sm" placeholder="Vol" value="${volVal}" required />
+                                                                </div>
+                                                                <div class="col-4">
+                                                                    <input type="number" step="0.01" name="ingredients[${ingredientIndex}].ToxicityScore" class="form-control form-control-sm" placeholder="Tox. Score" value="${toxVal}" required />
+                                                                </div>
+                                                            </div>
+                                                        `;
+                                container.insertAdjacentHTML('beforeend', rowHTML);
+                                ingredientIndex++;
+                            }
 
-    function clearIngredients() {
-        document.getElementById('ingredients-container').innerHTML = ''; 
-        ingredientIndex = 0; 
-    }
+                            function clearIngredients() {
+                                document.getElementById('ingredients-container').innerHTML = '';
+                                ingredientIndex = 0;
+                            }
 
-    // DEMO 1: A Highly Toxic Product
-    function loadToxicDemo() {
-        document.querySelector('input[name="productId"]').value = "101";
-        document.querySelector('input[name="totalVolume"]').value = "500";
+                            // DEMO 1: A Highly Toxic Product
+                            function loadToxicDemo() {
+                                document.querySelector('input[name="productId"]').value = "101";
+                                document.querySelector('input[name="totalVolume"]').value = "500";
         
-        clearIngredients();
-        addIngredientRow("Distilled Water", 350, 0.0);
-        addIngredientRow("Sodium Laureth Sulfate", 100, 0.85);
-        addIngredientRow("Artificial Fragrance", 50, 2.5);
-    }
+                                clearIngredients();
+                                addIngredientRow("Distilled Water", 350, 0.0);
+                                addIngredientRow("Sodium Laureth Sulfate", 100, 0.85);
+                                addIngredientRow("Artificial Fragrance", 50, 2.5);
+                            }
 
-    // DEMO 2: A Safe, Eco-Friendly Product
-    function loadEcoDemo() {
-        document.querySelector('input[name="productId"]').value = "102";
-        // Lowered volume to 400ml to ensure the base carbon stays well under 0.25kg
-        document.querySelector('input[name="totalVolume"]').value = "400";
+                            // DEMO 2: A Safe, Eco-Friendly Product
+                            function loadEcoDemo() {
+                                document.querySelector('input[name="productId"]').value = "102";
+                                // Lowered volume to 400ml to ensure the base carbon stays well under 0.25kg
+                                document.querySelector('input[name="totalVolume"]').value = "400";
         
-        clearIngredients();
-        // Adjusted ingredient volumes to match the new 400ml total
-        addIngredientRow("Aloe Vera Juice", 300, 0.0);
-        addIngredientRow("Plant-based Glycerin", 90, 0.05);
-        addIngredientRow("Essential Oil", 10, 0.1);
-    }
-</script>
+                                clearIngredients();
+                                // Adjusted ingredient volumes to match the new 400ml total
+                                addIngredientRow("Aloe Vera Juice", 300, 0.0);
+                                addIngredientRow("Plant-based Glycerin", 90, 0.05);
+                                addIngredientRow("Essential Oil", 10, 0.1);
+                            }
+                            // --- NEW: Read / Search Logic ---
+                            function toggleCustomSearch() {
+                                const isCustom = document.getElementById('radioCustom').checked;
+                                const customInput = document.getElementById('customSearchInput');
+        
+                                // Enable the text box only if "Custom ID" is selected
+                                customInput.disabled = !isCustom;
+        
+                                if (isCustom) {
+                                    customInput.focus();
+                                    customInput.required = true;
+                                } else {
+                                    customInput.value = ''; // Clear it out so old numbers don't linger
+                                    customInput.required = false;
+                                }
+                            }
+
+                            function prepareSearch() {
+                                const radioVal = document.querySelector('input[name="readOption"]:checked').value;
+                                const finalInput = document.getElementById('finalSearchId');
+
+                                // If custom is checked, grab the value from the text box
+                                if (radioVal === 'custom') {
+                                    const customVal = document.getElementById('customSearchInput').value;
+                                    if (!customVal) {
+                                        alert('Please enter a custom Product ID.');
+                                        return false; // Stop form submission
+                                    }
+                                    finalInput.value = customVal;
+                                } else {
+                                    // Otherwise, use the value directly from the radio button (101 or 102)
+                                    finalInput.value = radioVal;
+                                }
+                                return true; // Allow form submission
+                            }
+                        </script>

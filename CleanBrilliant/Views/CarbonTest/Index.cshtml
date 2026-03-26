@@ -51,18 +51,32 @@
                             <label class="form-label fw-bold">Timestamp (Shipment Date)</label>
                             <input type="date" id="timeStamp" name="timeStamp" class="form-control" value="@DateTime.Today.ToString("yyyy-MM-dd")" required />
                         </div>
-                       <div class="row mb-3">
+
+                        <div class="row mb-2">
                             <div class="col">
                                 <label class="form-label fw-bold">Qty: Product 101</label>
-                                <input type="number" id="qty101" name="qty101" class="form-control" value="0" min="0" required />
+                                <input type="number" id="qty101" name="qty101" class="form-control" value="0" min="0" />
                                 <small class="text-muted">Toxic Demo</small>
                             </div>
                             <div class="col">
                                 <label class="form-label fw-bold">Qty: Product 102</label>
-                                <input type="number" id="qty102" name="qty102" class="form-control" value="0" min="0" required />
+                                <input type="number" id="qty102" name="qty102" class="form-control" value="0" min="0" />
                                 <small class="text-muted">Eco Demo</small>
                             </div>
                         </div>
+
+                        <div class="row mb-3 p-3 bg-light rounded border">
+                            <h6 class="fw-bold mb-2">Custom Product (Optional)</h6>
+                            <div class="col">
+                                <label class="form-label small">Custom Product ID</label>
+                                <input type="number" id="customProductId" name="customProductId" class="form-control form-control-sm" placeholder="e.g. 105" />
+                            </div>
+                            <div class="col">
+                                <label class="form-label small">Custom Qty</label>
+                                <input type="number" id="customProductQty" name="customProductQty" class="form-control form-control-sm" value="0" min="0" />
+                            </div>
+                        </div>
+
                         <div class="mb-3">
                             <label class="form-label fw-bold">Package Quantity</label>
                             <input type="number" id="packageQty" name="packageQty" class="form-control" value="2" required />
@@ -72,6 +86,13 @@
                             <input type="text" id="receivedDates" name="receivedDates" class="form-control" placeholder="e.g., 2026-03-01, 2026-03-05" required />
                             <small class="text-muted">Comma-separated dates. Storage CF is calculated against the Shipment Date above.</small>
                         </div>
+                        
+                        <div class="mb-3 p-3 bg-warning bg-opacity-10 border border-warning rounded">
+                            <label class="form-label fw-bold text-warning-emphasis">Shipment CF (Debug Override)</label>
+                            <input type="number" step="0.01" id="shipmentCf" name="shipmentCf" class="form-control border-warning" placeholder="Optional manual value..." />
+                            <small class="text-muted">Fills the shipment_cf column directly to bypass normal routing logic for testing.</small>
+                        </div>
+
                         <button type="submit" class="btn btn-primary w-100 mt-2">Calculate & Insert Database Record</button>
                     </form>
                 </div>
@@ -97,29 +118,30 @@
 
 <script>
     function autoFillRandomData() {
-        // 1. Random Order ID (between 1000 and 99999)
         document.getElementById('orderId').value = Math.floor(Math.random() * 90000) + 1000;
 
-        // 2. Random Shipment Date (within the last 30 days)
         const shipmentDate = new Date();
         shipmentDate.setDate(shipmentDate.getDate() - Math.floor(Math.random() * 30));
         document.getElementById('timeStamp').value = shipmentDate.toISOString().split('T')[0];
 
-      document.getElementById('qty101').value = Math.floor(Math.random() * 20); // 0 to 19
-        document.getElementById('qty102').value = Math.floor(Math.random() * 50) + 5; // 5 to 54
+        document.getElementById('qty101').value = Math.floor(Math.random() * 20); 
+        document.getElementById('qty102').value = Math.floor(Math.random() * 50) + 5; 
+        
+        document.getElementById('customProductId').value = Math.floor(Math.random() * 500) + 200; 
+        document.getElementById('customProductQty').value = Math.floor(Math.random() * 15); 
 
-        // 4. Random Package Quantity (between 1 and 10)
         document.getElementById('packageQty').value = Math.floor(Math.random() * 10) + 1;
 
-        // 5. Random Received Dates (must be BEFORE the shipment date to simulate storage time)
-        const numReceivedDates = Math.floor(Math.random() * 3) + 1; // 1 to 3 received batches
+        const numReceivedDates = Math.floor(Math.random() * 3) + 1; 
         const receivedDates = [];
         for (let i = 0; i < numReceivedDates; i++) {
             const recDate = new Date(shipmentDate);
-            // Received between 1 and 14 days prior to shipment
             recDate.setDate(recDate.getDate() - (Math.floor(Math.random() * 14) + 1)); 
             receivedDates.push(recDate.toISOString().split('T')[0]);
         }
         document.getElementById('receivedDates').value = receivedDates.join(', ');
+
+        // Add a random debug Shipment CF
+        document.getElementById('shipmentCf').value = (Math.random() * 100).toFixed(2);
     }
 </script>
