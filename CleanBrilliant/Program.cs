@@ -62,10 +62,11 @@ builder.Services.AddScoped<ICustomerCarbonDataGateway, CustomerCarbonDataGateway
 builder.Services.AddScoped<IEmployeeRepository, EmployeeRepositoryGateway>();
 builder.Services.AddScoped<IBuildingRepository, BuildingRepositoryGateway>();
 builder.Services.AddScoped<IShippingMethodGateway, ShippingMethodGateway>();
+builder.Services.AddScoped<ISupplierLookupGateway, SupplierLookupGateway>();
 
 // Boundary adapters
 builder.Services.AddHttpClient<IOSRMService, OSRMApiAdapter>();
-builder.Services.AddScoped<IPostalService, PostalCodeDatabaseAdapter>();
+builder.Services.AddHttpClient<IPostalService, PostalCodeDatabaseAdapter>();
 
 // Factory
 builder.Services.AddScoped<ICarbonEntityFactory, CustomerEntityFactory>();

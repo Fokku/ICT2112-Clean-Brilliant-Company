@@ -42,6 +42,30 @@ namespace CleanBrilliant.Controllers
             return View();
         }
 
+        [HttpGet("RouteCalculation")]
+        public IActionResult RouteCalculation()
+        {
+            return View();
+        }
+
+        [HttpGet("CustomerHubRouteCalculation")]
+        public IActionResult CustomerHubRouteCalculation()
+        {
+            return RedirectToAction(nameof(RouteCalculation));
+        }
+
+        [HttpGet("CustomerDistanceCalculation")]
+        public IActionResult CustomerDistanceCalculation()
+        {
+            return RedirectToAction(nameof(RouteCalculation));
+        }
+
+        [HttpGet("HubLookup")]
+        public IActionResult HubLookup()
+        {
+            return RedirectToAction(nameof(RouteCalculation));
+        }
+
         [HttpGet("Dashboard")]
         public IActionResult Dashboard()
         {

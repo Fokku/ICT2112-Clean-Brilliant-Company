@@ -14,17 +14,18 @@ namespace CleanBrilliant.Data.Gateways
                 ?? throw new InvalidOperationException("Missing ConnectionStrings:DefaultConnection in appsettings.json");
         }
 
-        public async Task Insert(string restockID, float distanceKm, float durationMin, float timeStamp)
+        public async Task Insert(string restockID, string supplierRouteDistID, float distanceKm, float durationMin, float timeStamp)
         {
             const string sql = @"
-                INSERT INTO inbound_logistics (restock_id, distance_km, duration_min, timestamp)
-                VALUES (@restockID, @distanceKm, @durationMin, @timestamp);";
+                INSERT INTO inbound_logistics (restock_id, supplier_route_dist_id, distance_km, duration_min, timestamp)
+                VALUES (@restockID, @supplierRouteDistID, @distanceKm, @durationMin, @timestamp);";
 
             await using var conn = new NpgsqlConnection(_connString);
             await conn.OpenAsync();
 
             await using var cmd = new NpgsqlCommand(sql, conn);
             cmd.Parameters.AddWithValue("restockID", restockID);
+            cmd.Parameters.AddWithValue("supplierRouteDistID", supplierRouteDistID);
             cmd.Parameters.AddWithValue("distanceKm", distanceKm);
             cmd.Parameters.AddWithValue("durationMin", durationMin);
             cmd.Parameters.AddWithValue("timestamp", timeStamp);
@@ -35,9 +36,11 @@ namespace CleanBrilliant.Data.Gateways
         public async Task<DataTable> FindBy(string restockID)
         {
             const string sql = @"
-                SELECT restock_id, distance_km, duration_min, timestamp
+                SELECT restock_id, supplier_route_dist_id, distance_km, duration_min, timestamp
                 FROM inbound_logistics
-                WHERE restock_id = @restockID;";
+                WHERE restock_id = @restockID
+                ORDER BY timestamp DESC
+                LIMIT 1;";
 
             var ds = new DataSet();
 

@@ -43,7 +43,8 @@ namespace CleanBrilliant.Domain.Control
         {
             if (_routeData == null) return;
             float timeStamp = (float)DateTimeOffset.UtcNow.ToUnixTimeSeconds();
-            await _gateway.Insert(referenceID, _routeData.DistanceKm, _routeData.DurationMin, timeStamp);
+            string routeDistId = Guid.NewGuid().ToString();
+            await _gateway.Insert(referenceID, routeDistId, _routeData.DistanceKm, _routeData.DurationMin, timeStamp);
         }
     }
 }

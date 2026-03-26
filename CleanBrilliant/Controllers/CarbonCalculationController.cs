@@ -10,13 +10,19 @@ namespace CleanBrilliant.Controllers
     {
         private readonly TransportCarbonManager _transportCarbonManager;
         private readonly CarbonDataAggregator _carbonDataAggregator;
+        private readonly CleanBrilliant.Domain.BoundaryInterface.ISupplierLookupGateway _supplierLookupGateway;
+        private readonly OutboundDistribution _outboundDistribution;
 
         public CarbonCalculationController(
             TransportCarbonManager transportCarbonManager,
-            CarbonDataAggregator carbonDataAggregator)
+            CarbonDataAggregator carbonDataAggregator,
+            CleanBrilliant.Domain.BoundaryInterface.ISupplierLookupGateway supplierLookupGateway,
+            OutboundDistribution outboundDistribution)
         {
             _transportCarbonManager = transportCarbonManager;
             _carbonDataAggregator = carbonDataAggregator;
+            _supplierLookupGateway = supplierLookupGateway;
+            _outboundDistribution = outboundDistribution;
         }
 
         [HttpGet("order/{orderID}/shipping")]
@@ -113,11 +119,88 @@ namespace CleanBrilliant.Controllers
             return Ok(summary);
         }
 
+        [HttpGet("hubs")]
+        public async Task<IActionResult> GetHubs()
+        {
+            var table = await _supplierLookupGateway.FindAll();
+            var results = new List<object>();
+
+            foreach (System.Data.DataRow row in table.Rows)
+            {
+                string supplierId = row.Table.Columns.Contains("supplier_id") && row["supplier_id"] != DBNull.Value
+                    ? Convert.ToString(row["supplier_id"]) ?? string.Empty
+                    : string.Empty;
+
+                string name = GetString(row, "company_name")
+                    ?? GetString(row, "supplier_name")
+                    ?? GetString(row, "name")
+                    ?? $"Supplier {supplierId}";
+
+                string postalCode = GetString(row, "postal_code")
+                    ?? GetString(row, "postalCode")
+                    ?? "N/A";
+
+                results.Add(new
+                {
+                    supplierId,
+                    companyName = name,
+                    postalCode
+                });
+            }
+
+            return Ok(results);
+        }
+
+        [HttpGet("customer-distance")]
+        public async Task<IActionResult> CalculateCustomerDistance(
+            [FromQuery] string customerPostalCode,
+            [FromQuery] string hubPostalCode,
+            [FromQuery] string companyName = "")
+        {
+            if (string.IsNullOrWhiteSpace(customerPostalCode) || string.IsNullOrWhiteSpace(hubPostalCode))
+            {
+                return BadRequest(new { message = "Both customer postal code and hub postal code are required." });
+            }
+
+            try
+            {
+                var route = await _outboundDistribution.CalculatePostalRoute(customerPostalCode, hubPostalCode);
+
+                return Ok(new
+                {
+                    customerPostalCode,
+                    hubPostalCode,
+                    companyName,
+                    customerLatitude = Math.Round(route.SourceLatitude, 6),
+                    customerLongitude = Math.Round(route.SourceLongitude, 6),
+                    hubLatitude = Math.Round(route.DestinationLatitude, 6),
+                    hubLongitude = Math.Round(route.DestinationLongitude, 6),
+                    distanceKm = Math.Round(route.DistanceKm, 2),
+                    durationMin = Math.Round(route.DurationMin, 2),
+                    formula = route.Formula
+                });
+            }
+            catch (InvalidOperationException ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+        }
+
         [HttpGet("logs")]
         public async Task<IActionResult> GetCarbonLogs()
         {
             var logs = await _carbonDataAggregator.GetCarbonLogs();
             return Ok(logs);
+        }
+
+        private static string? GetString(System.Data.DataRow row, string columnName)
+        {
+            if (!row.Table.Columns.Contains(columnName) || row[columnName] == DBNull.Value)
+            {
+                return null;
+            }
+
+            return Convert.ToString(row[columnName]);
         }
     }
 }

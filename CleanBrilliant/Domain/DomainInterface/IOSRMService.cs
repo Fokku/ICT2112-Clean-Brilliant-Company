@@ -3,6 +3,10 @@ namespace CleanBrilliant.Domain.DomainInterface
 {
     public interface IOSRMService
     {
-        Task<float> GetRouteDistance(double longitude, double latitude);
+        Task<(float DistanceKm, float DurationMin)> GetRoute(
+            double sourceLongitude,
+            double sourceLatitude,
+            double destinationLongitude,
+            double destinationLatitude);
     }
 }

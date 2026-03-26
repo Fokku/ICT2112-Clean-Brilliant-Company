@@ -104,6 +104,22 @@ var Carbon = (function ($) {
             '</div>';
     }
 
+    function renderHubLookup(result) {
+        return '' +
+            '<div class="p-3 rounded" style="background:#f8fafc;border:1px solid #e2e8f0;">' +
+            '<div class="d-flex justify-content-between mb-2"><span class="text-muted">Customer Postal Code</span><span class="fw-semibold">' + result.customerPostalCode + '</span></div>' +
+            '<div class="d-flex justify-content-between mb-2"><span class="text-muted">Company Name</span><span class="fw-semibold">' + result.companyName + '</span></div>' +
+            '<div class="d-flex justify-content-between mb-2"><span class="text-muted">Hub Postal Code</span><span class="fw-semibold">' + result.hubPostalCode + '</span></div>' +
+            '<div class="d-flex justify-content-between mb-2"><span class="text-muted">Customer Latitude</span><span class="fw-semibold">' + result.customerLatitude + '</span></div>' +
+            '<div class="d-flex justify-content-between mb-2"><span class="text-muted">Customer Longitude</span><span class="fw-semibold">' + result.customerLongitude + '</span></div>' +
+            '<div class="d-flex justify-content-between mb-2"><span class="text-muted">Hub Latitude</span><span class="fw-semibold">' + result.hubLatitude + '</span></div>' +
+            '<div class="d-flex justify-content-between mb-2"><span class="text-muted">Hub Longitude</span><span class="fw-semibold">' + result.hubLongitude + '</span></div>' +
+            '<div class="d-flex justify-content-between mb-2"><span class="text-muted">Distance</span><span class="fw-semibold">' + result.distanceKm + ' km</span></div>' +
+            '<div class="mb-2"><span class="text-muted d-block">Coordinate Route</span><span class="fw-semibold">' + result.formula + '</span></div>' +
+            '<div class="d-flex justify-content-between"><span class="text-muted">Estimated Duration</span><span class="fw-semibold">' + result.durationMin + ' min</span></div>' +
+            '</div>';
+    }
+
     // ========== DASHBOARD ==========
     function initDashboard() {
         $.get('/api/corporate-footprint/employees', function (data) {
@@ -157,6 +173,65 @@ var Carbon = (function ($) {
                 showError('#dashboard-inbound-form', message);
                 setLoading(btn, false, 'Search');
                 $('#dashboard-inbound-result').hide();
+            });
+        });
+    }
+
+    function initHubLookup() {
+        $.get('/api/carbon/hubs', function (data) {
+            var select = $('#hub-select');
+            select.empty();
+
+            if (!data || data.length === 0) {
+                select.append('<option value="">No hubs available</option>');
+                return;
+            }
+
+            select.append('<option value="">Select a hub</option>');
+            data.forEach(function (hub) {
+                var label = hub.companyName + ' (' + hub.postalCode + ')';
+                select.append(
+                    $('<option></option>')
+                        .val(hub.supplierId)
+                        .text(label)
+                        .attr('data-company-name', hub.companyName)
+                        .attr('data-postal-code', hub.postalCode)
+                );
+            });
+        }).fail(function () {
+            showError('#hub-lookup-container', 'Failed to load hub list.');
+            $('#hub-select').html('<option value="">Failed to load hubs</option>');
+        });
+
+        $('#hub-lookup-form').on('submit', function (e) {
+            e.preventDefault();
+            var btn = $(this).find('button[type="submit"]');
+            setLoading(btn, true);
+
+            var customerPostalCode = $('#customer-postal-code').val();
+            var selectedHub = $('#hub-select option:selected');
+            var supplierId = selectedHub.val();
+
+            if (!supplierId) {
+                showError('#hub-lookup-container', 'Select a current hub first.');
+                setLoading(btn, false, 'Calculate Distance');
+                $('#hub-lookup-result').hide();
+                return;
+            }
+
+            $.get('/api/carbon/customer-distance', {
+                customerPostalCode: customerPostalCode,
+                hubPostalCode: selectedHub.attr('data-postal-code'),
+                companyName: selectedHub.attr('data-company-name')
+            }, function (result) {
+                clearError('#hub-lookup-container');
+                $('#hub-lookup-result').html(renderHubLookup(result)).show();
+                setLoading(btn, false, 'Calculate Distance');
+            }).fail(function (xhr) {
+                var message = xhr.responseJSON?.message || 'Failed to calculate customer-to-hub distance.';
+                showError('#hub-lookup-container', message);
+                setLoading(btn, false, 'Calculate Distance');
+                $('#hub-lookup-result').hide();
             });
         });
     }
@@ -395,11 +470,11 @@ var Carbon = (function ($) {
             $.get('/api/carbon/order/' + orderId + '/summary', function (summary) {
                 clearError('#order-summary-form');
                 $('#order-summary-result').html(renderTotalSummary(summary)).show();
-                setLoading(btn, false, 'Lookup Summary');
+                setLoading(btn, false, 'Lookup');
             }).fail(function (xhr) {
                 var message = xhr.responseJSON?.message || 'Invalid order ID.';
                 showError('#order-summary-form', message);
-                setLoading(btn, false, 'Lookup Summary');
+                setLoading(btn, false, 'Lookup');
                 $('#order-summary-result').hide();
             });
         });
@@ -413,11 +488,11 @@ var Carbon = (function ($) {
             $.get('/api/carbon/restock/' + restockId + '/summary', function (summary) {
                 clearError('#restock-summary-form');
                 $('#restock-summary-result').html(renderTotalSummary(summary)).show();
-                setLoading(btn, false, 'Lookup Summary');
+                setLoading(btn, false, 'Lookup');
             }).fail(function (xhr) {
                 var message = xhr.responseJSON?.message || 'Invalid restock ID.';
                 showError('#restock-summary-form', message);
-                setLoading(btn, false, 'Lookup Summary');
+                setLoading(btn, false, 'Lookup');
                 $('#restock-summary-result').hide();
             });
         });
@@ -531,6 +606,7 @@ var Carbon = (function ($) {
     return {
         initDashboard: initDashboard,
         initRouteSummary: initRouteSummary,
+        initHubLookup: initHubLookup,
         initEmployees: initEmployees,
         initBuildings: initBuildings,
         initShipping: initShipping,

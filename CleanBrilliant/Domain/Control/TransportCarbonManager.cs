@@ -174,6 +174,9 @@ namespace CleanBrilliant.Domain.Control
             return new
             {
                 restockID = Convert.ToString(row["restock_id"]) ?? restockID,
+                supplierRouteDistID = row.Table.Columns.Contains("supplier_route_dist_id") && row["supplier_route_dist_id"] != DBNull.Value
+                    ? Convert.ToString(row["supplier_route_dist_id"])
+                    : null,
                 distanceKm = row["distance_km"] == DBNull.Value ? (float?)null : Convert.ToSingle(row["distance_km"]),
                 durationMin = row["duration_min"] == DBNull.Value ? (float?)null : Convert.ToSingle(row["duration_min"]),
                 timestamp = row.Table.Columns.Contains("timestamp") && row["timestamp"] != DBNull.Value
