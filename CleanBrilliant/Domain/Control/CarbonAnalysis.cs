@@ -27,21 +27,41 @@ namespace CleanBrilliant.Domain.Control
             return distanceKm * coeff;
         }
 
-        public string RecommendLowestShippingMethod(float distanceKm)
+        public string RecommendLowestShippingMethod(float distanceKm, string deliveryType)
         {
-            string best = "truck";
+            string best = "truck"; // Fallback default
             float lowest = float.MaxValue;
-            foreach (var method in new[] { "truck", "air", "ship", "rail" })
+
+            // Map delivery speeds to capable shipping methods
+            // 1 = Priority (Fastest), 2 = Express, 3 = Standard (Slowest)
+            string[] allowedMethods = deliveryType switch
+            {
+                "1" => new[] { "air" },                           // Priority delivery is restricted to air
+                "2" => new[] { "air", "truck" },                  // Express can be air or fast trucking
+                "3" => new[] { "truck", "rail", "ship" },         // Standard allows for slower, low-carbon methods
+                _ => new[] { "truck", "air", "ship", "rail" }     // Default fallback if input is empty/invalid
+            };
+
+            // Only evaluate the carbon footprint of methods allowed for this speed
+            foreach (var method in allowedMethods)
             {
                 float carbon = distanceKm * GetConfiguredCoefficient(method);
-                if (carbon < lowest) { lowest = carbon; best = method; }
+                if (carbon < lowest) 
+                { 
+                    lowest = carbon; 
+                    best = method; 
+                }
             }
+            
             return best;
         }
 
         public async Task<string> GetShippingRecommendation(string postalCode, string deliveryType, string countryCode)
         {
-            return await Task.FromResult(RecommendLowestShippingMethod(100)); // placeholder distance
+            float placeholderDistanceKm = 100f;
+            
+            // Pass the deliveryType down to the actual calculation method
+            return await Task.FromResult(RecommendLowestShippingMethod(placeholderDistanceKm, deliveryType)); 
         }
 
         private float GetConfiguredCoefficient(string method)

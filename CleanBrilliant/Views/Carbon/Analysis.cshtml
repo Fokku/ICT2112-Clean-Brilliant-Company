@@ -17,11 +17,15 @@
                     <div class="row g-2 align-items-end">
                         <div class="col">
                             <label for="analysis-postal" class="form-label" style="font-size:.85rem;">Postal Code</label>
-                            <input type="text" class="form-control" id="analysis-postal" required>
+                            <input type="text" class="form-control" id="analysis-postal" placeholder="e.g. 123456" required>
                         </div>
                         <div class="col">
-                            <label for="analysis-delivery" class="form-label" style="font-size:.85rem;">Delivery Type</label>
-                            <input type="text" class="form-control" id="analysis-delivery" required>
+                            <label for="analysis-delivery" class="form-label" style="font-size:.85rem;">Delivery Speed</label>
+                            <select class="form-select" id="analysis-delivery" required>
+                                <option value="1">Priority (Fastest)</option>
+                                <option value="2">Express (Fast)</option>
+                                <option value="3" selected>Standard (Eco-Friendly)</option>
+                            </select>
                         </div>
                         <div class="col">
                             <label for="analysis-country" class="form-label" style="font-size:.85rem;">Country</label>
@@ -32,26 +36,7 @@
                         </div>
                     </div>
                 </form>
-                <div id="recommend-result" class="mt-3" style="display:none;"></div>
-            </div>
-        </div>
-
-        <!-- Carbon Level Analysis -->
-        <div class="card mb-3">
-            <div class="card-body">
-                <h6 class="text-uppercase text-muted fw-semibold mb-3" style="font-size:.82rem;letter-spacing:.5px;">Carbon Level Analysis</h6>
-                <form id="analyze-form">
-                    <div class="row g-2 align-items-end">
-                        <div class="col">
-                            <label for="analyze-carbon" class="form-label" style="font-size:.85rem;">Total Carbon (tonnes)</label>
-                            <input type="number" class="form-control" id="analyze-carbon" step="0.1" min="0" required>
-                        </div>
-                        <div class="col-auto">
-                            <button type="submit" class="btn btn-primary">Analyze</button>
-                        </div>
-                    </div>
-                </form>
-                <div id="analyze-result" class="mt-3" style="display:none;"></div>
+                <div id="recommend-result" class="mt-3 p-2 border rounded bg-light" style="display:none;"></div>
             </div>
         </div>
 
@@ -80,6 +65,25 @@
                     </div>
                 </form>
                 <div id="estimate-result" class="mt-3" style="display:none;"></div>
+            </div>
+        </div>
+
+        <!-- Carbon Level Analysis -->
+        <div class="card mb-3">
+            <div class="card-body">
+                <h6 class="text-uppercase text-muted fw-semibold mb-3" style="font-size:.82rem;letter-spacing:.5px;">Carbon Level Analysis</h6>
+                <form id="analyze-form">
+                    <div class="row g-2 align-items-end">
+                        <div class="col">
+                            <label for="analyze-carbon" class="form-label" style="font-size:.85rem;">Total Carbon (tonnes)</label>
+                            <input type="number" class="form-control" id="analyze-carbon" step="0.1" min="0" required>
+                        </div>
+                        <div class="col-auto">
+                            <button type="submit" class="btn btn-primary">Analyze</button>
+                        </div>
+                    </div>
+                </form>
+                <div id="analyze-result" class="mt-3" style="display:none;"></div>
             </div>
         </div>
     </div>
