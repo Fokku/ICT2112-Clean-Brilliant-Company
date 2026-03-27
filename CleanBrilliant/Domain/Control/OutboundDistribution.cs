@@ -48,18 +48,14 @@ namespace CleanBrilliant.Domain.Control
             };
 
         private readonly IOutboundDistributionGateway _gateway;
-        private readonly InboundLogistics _inboundLogistics;
-
         public OutboundDistribution(
             IOSRMService osrmService,
             IPostalService postalService,
             ICarbonEntityFactory factory,
-            IOutboundDistributionGateway gateway,
-            InboundLogistics inboundLogistics)
+            IOutboundDistributionGateway gateway)
             : base(osrmService, postalService, factory)
         {
             _gateway = gateway;
-            _inboundLogistics = inboundLogistics;
         }
 
         public async Task<float> GetCustomerDistance(string orderID)
@@ -75,28 +71,21 @@ namespace CleanBrilliant.Domain.Control
         }
 
         public async Task<OutboundRouteResult> CalculateOutboundRoute(
-            string warehouseId,
             string customerPostalCode,
             string shippingMethod,
             string countryCode)
         {
             var normalizedMethod = NormalizeShippingMethod(shippingMethod);
-            var warehouse = _inboundLogistics.GetSupportedWarehouse(warehouseId);
-            if (warehouse == null)
-            {
-                throw new InvalidOperationException(
-                    "Outbound logistics only supports SIT Campus W Block, SIT Dover, and SIT NYP as warehouse origins.");
-            }
 
             if (IsSingaporeDestination(countryCode))
             {
                 var localTruckLeg = await BuildTruckLeg(
-                    warehouse.Name,
-                    warehouse.PostalCode,
+                    CompanyLocationName,
+                    CompanyPostalCode,
                     "Customer Location",
                     customerPostalCode);
 
-                return BuildResult(warehouse, normalizedMethod, [localTruckLeg]);
+                return BuildResult(normalizedMethod, [localTruckLeg]);
             }
 
             if (IsMalaysiaDestination(countryCode) &&
@@ -104,8 +93,8 @@ namespace CleanBrilliant.Domain.Control
                 !string.Equals(normalizedMethod, "truck", StringComparison.OrdinalIgnoreCase))
             {
                 var truckToSingaporeHub = await BuildTruckLegToFixedPoint(
-                    warehouse.Name,
-                    warehouse.PostalCode,
+                    CompanyLocationName,
+                    CompanyPostalCode,
                     profile.SingaporeHubName,
                     profile.SingaporeHubLatitude,
                     profile.SingaporeHubLongitude);
@@ -117,15 +106,15 @@ namespace CleanBrilliant.Domain.Control
                     "Customer Location",
                     customerPostalCode);
 
-                return BuildResult(warehouse, normalizedMethod, [truckToSingaporeHub, crossBorderLeg, truckToCustomer]);
+                return BuildResult(normalizedMethod, [truckToSingaporeHub, crossBorderLeg, truckToCustomer]);
             }
 
             var directTruckLeg = await BuildTruckLeg(
-                warehouse.Name,
-                warehouse.PostalCode,
+                CompanyLocationName,
+                CompanyPostalCode,
                 "Customer Location",
                 customerPostalCode);
-            return BuildResult(warehouse, "truck", [directTruckLeg]);
+            return BuildResult("truck", [directTruckLeg]);
         }
 
         protected override async Task<float> CalculateSpecificSegments()
@@ -257,7 +246,6 @@ namespace CleanBrilliant.Domain.Control
         }
 
         private static OutboundRouteResult BuildResult(
-            InboundLogistics.InboundWarehouse warehouse,
             string selectedMethod,
             IReadOnlyList<OutboundLeg> legs)
         {
@@ -265,13 +253,11 @@ namespace CleanBrilliant.Domain.Control
             var totalDuration = legs.Sum(leg => leg.DurationMin);
 
             return new OutboundRouteResult(
-                warehouse.Id,
-                warehouse.Name,
                 selectedMethod,
                 totalDistance,
                 totalDuration,
                 legs,
-                $"{warehouse.Name} -> {string.Join(" -> ", legs.Select(leg => leg.Destination))}");
+                $"{CompanyLocationName} -> {string.Join(" -> ", legs.Select(leg => leg.Destination))}");
         }
 
         private static string NormalizeShippingMethod(string shippingMethod)
@@ -322,8 +308,6 @@ namespace CleanBrilliant.Domain.Control
             string SourceType);
 
         public sealed record OutboundRouteResult(
-            string WarehouseId,
-            string WarehouseName,
             string SelectedMethod,
             float TotalDistanceKm,
             float TotalDurationMin,

@@ -105,6 +105,7 @@ var Carbon = (function ($) {
     }
 
     function renderHubLookup(result) {
+        var routeChain = result.routeChain || result.formula;
         var legsHtml = '';
         if (Array.isArray(result.legs)) {
             result.legs.forEach(function (leg, index) {
@@ -122,18 +123,19 @@ var Carbon = (function ($) {
 
         return '' +
             '<div class="p-3 rounded" style="background:#f8fafc;border:1px solid #e2e8f0;">' +
-            '<div class="d-flex justify-content-between mb-2"><span class="text-muted">Warehouse</span><span class="fw-semibold">' + result.warehouseName + '</span></div>' +
+            '<div class="d-flex justify-content-between mb-2"><span class="text-muted">Company</span><span class="fw-semibold">' + result.companyName + '</span></div>' +
             '<div class="d-flex justify-content-between mb-2"><span class="text-muted">Customer Location</span><span class="fw-semibold">' + result.customerPostalCode + '</span></div>' +
             '<div class="d-flex justify-content-between mb-2"><span class="text-muted">Country</span><span class="fw-semibold">' + result.countryCode + '</span></div>' +
             '<div class="d-flex justify-content-between mb-2"><span class="text-muted">Selected Method</span><span class="fw-semibold">' + result.shippingMethod + '</span></div>' +
             '<div class="d-flex justify-content-between mb-2"><span class="text-muted">Total Distance</span><span class="fw-semibold">' + result.distanceKm + ' km</span></div>' +
             '<div class="d-flex justify-content-between mb-2"><span class="text-muted">Total Duration</span><span class="fw-semibold">' + result.durationMin + ' min</span></div>' +
-            '<div class="mb-2"><span class="text-muted d-block">Route Chain</span><span class="fw-semibold">' + result.formula + '</span></div>' +
+            '<div class="mb-2"><span class="text-muted d-block">Route Chain</span><span class="fw-semibold">' + routeChain + '</span></div>' +
             legsHtml +
             '</div>';
     }
 
     function renderInboundLookup(result) {
+        var routeChain = result.routeChain || (result.warehouseName + ' -> ' + result.companyName);
         return '' +
             '<div class="p-3 rounded" style="background:#f8fafc;border:1px solid #e2e8f0;">' +
             '<div class="d-flex justify-content-between mb-2"><span class="text-muted">Company</span><span class="fw-semibold">' + result.companyName + '</span></div>' +
@@ -141,7 +143,7 @@ var Carbon = (function ($) {
             '<div class="d-flex justify-content-between mb-2"><span class="text-muted">Method</span><span class="fw-semibold">' + result.shippingMethod + '</span></div>' +
             '<div class="d-flex justify-content-between mb-2"><span class="text-muted">Distance</span><span class="fw-semibold">' + result.distanceKm + ' km</span></div>' +
             '<div class="d-flex justify-content-between mb-2"><span class="text-muted">Duration</span><span class="fw-semibold">' + result.durationMin + ' min</span></div>' +
-            '<div class="mb-2"><span class="text-muted d-block">Route</span><span class="fw-semibold">' + result.companyName + ' -> ' + result.warehouseName + '</span></div>' +
+            '<div class="mb-2"><span class="text-muted d-block">Route</span><span class="fw-semibold">' + routeChain + '</span></div>' +
             '<div class="mb-2"><span class="text-muted d-block">Formula</span><span class="fw-semibold">' + result.formula + '</span></div>' +
             '</div>';
     }
@@ -229,19 +231,10 @@ var Carbon = (function ($) {
             setLoading(btn, true);
 
             var customerPostalCode = $('#customer-postal-code').val();
-            var warehouseId = $('#warehouse-select').val();
             var countryCode = $('#country-code').val();
             var method = $('#transport-method').val();
 
-            if (!warehouseId) {
-                showError('#hub-lookup-container', 'Select a warehouse first.');
-                setLoading(btn, false, 'Calculate Distance');
-                $('#hub-lookup-result').hide();
-                return;
-            }
-
             $.get('/api/carbon/outbound-route', {
-                warehouseId: warehouseId,
                 customerPostalCode: customerPostalCode,
                 method: method,
                 countryCode: countryCode

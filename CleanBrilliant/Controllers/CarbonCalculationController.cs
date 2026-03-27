@@ -167,6 +167,7 @@ namespace CleanBrilliant.Controllers
                     warehouseName = warehouse.Name,
                     warehousePostalCode = warehouse.PostalCode,
                     shippingMethod = "truck",
+                    routeChain = $"{warehouse.Name} -> {InboundLogistics.CompanyLocationName}",
                     sourceLatitude = Math.Round(route.SourceLatitude, 6),
                     sourceLongitude = Math.Round(route.SourceLongitude, 6),
                     destinationLatitude = Math.Round(route.DestinationLatitude, 6),
@@ -251,18 +252,12 @@ namespace CleanBrilliant.Controllers
 
         [HttpGet("outbound-route")]
         public async Task<IActionResult> CalculateOutboundRoute(
-            [FromQuery] string warehouseId,
             [FromQuery] string customerPostalCode,
             [FromQuery] string method = "truck",
             [FromQuery] string countryCode = "SG")
         {
             var normalizedMethod = NormalizeShippingMethod(method);
             var malaysiaDestination = IsMalaysiaDestination(countryCode);
-
-            if (string.IsNullOrWhiteSpace(warehouseId))
-            {
-                return BadRequest(new { message = "A supported warehouse ID is required." });
-            }
 
             if (string.IsNullOrWhiteSpace(customerPostalCode) &&
                 (!malaysiaDestination || string.Equals(normalizedMethod, "truck", StringComparison.OrdinalIgnoreCase)))
@@ -272,19 +267,18 @@ namespace CleanBrilliant.Controllers
 
             try
             {
-                var route = await _outboundDistribution.CalculateOutboundRoute(warehouseId, customerPostalCode, method, countryCode);
+                var route = await _outboundDistribution.CalculateOutboundRoute(customerPostalCode, method, countryCode);
 
                 return Ok(new
                 {
                     companyName = OutboundDistribution.CompanyLocationName,
                     companyPostalCode = OutboundDistribution.CompanyPostalCode,
-                    warehouseId = route.WarehouseId,
-                    warehouseName = route.WarehouseName,
                     customerPostalCode,
                     countryCode,
                     shippingMethod = route.SelectedMethod,
                     distanceKm = Math.Round(route.TotalDistanceKm, 2),
                     durationMin = Math.Round(route.TotalDurationMin, 2),
+                    routeChain = route.Formula,
                     formula = route.Formula,
                     legs = route.Legs.Select(leg => new
                     {

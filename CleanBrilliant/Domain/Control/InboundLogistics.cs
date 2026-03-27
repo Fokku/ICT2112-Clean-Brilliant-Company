@@ -45,7 +45,7 @@ namespace CleanBrilliant.Domain.Control
                     "Inbound logistics only supports SIT Campus W Block, SIT Dover, and SIT NYP.");
             }
 
-            return await CalculatePostalRoute(CompanyPostalCode, warehouse.PostalCode);
+            return await CalculatePostalRoute(warehouse.PostalCode, CompanyPostalCode);
         }
 
         public async Task<float> GetRestockDistance(string restockID)
