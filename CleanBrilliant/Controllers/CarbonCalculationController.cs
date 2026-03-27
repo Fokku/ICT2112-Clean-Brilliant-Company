@@ -158,11 +158,21 @@ namespace CleanBrilliant.Controllers
                 }
 
                 var route = await _inboundLogistics.CalculateInboundRoute(warehouseId);
+                string? restockId = Request.Query["restockID"].FirstOrDefault();
+
+                float? loggedCarbon = null;
+                if (!string.IsNullOrWhiteSpace(restockId))
+                {
+                    await _inboundLogistics.LogCalculatedRoute(restockId, route);
+                    loggedCarbon = await _transportCarbonManager.CalculateSupplierDistanceCarbon(route.DistanceKm, "truck");
+                    await _transportCarbonManager.LogRestockEmission(restockId, loggedCarbon.Value);
+                }
 
                 return Ok(new
                 {
                     companyName = InboundLogistics.CompanyLocationName,
                     companyPostalCode = InboundLogistics.CompanyPostalCode,
+                    restockID = restockId,
                     warehouseId = warehouse.Id,
                     warehouseName = warehouse.Name,
                     warehousePostalCode = warehouse.PostalCode,
@@ -174,7 +184,8 @@ namespace CleanBrilliant.Controllers
                     destinationLongitude = Math.Round(route.DestinationLongitude, 6),
                     distanceKm = Math.Round(route.DistanceKm, 2),
                     durationMin = Math.Round(route.DurationMin, 2),
-                    formula = route.Formula
+                    formula = route.Formula,
+                    loggedTransportCarbon = loggedCarbon.HasValue ? Math.Round((double)loggedCarbon.Value, 4) : (double?)null
                 });
             }
             catch (InvalidOperationException ex)
@@ -254,7 +265,8 @@ namespace CleanBrilliant.Controllers
         public async Task<IActionResult> CalculateOutboundRoute(
             [FromQuery] string customerPostalCode,
             [FromQuery] string method = "truck",
-            [FromQuery] string countryCode = "SG")
+            [FromQuery] string countryCode = "SG",
+            [FromQuery] string? orderID = null)
         {
             var normalizedMethod = NormalizeShippingMethod(method);
             var malaysiaDestination = IsMalaysiaDestination(countryCode);
@@ -268,9 +280,19 @@ namespace CleanBrilliant.Controllers
             try
             {
                 var route = await _outboundDistribution.CalculateOutboundRoute(customerPostalCode, method, countryCode);
+                float? loggedCarbon = null;
+
+                if (!string.IsNullOrWhiteSpace(orderID))
+                {
+                    await _outboundDistribution.LogCalculatedRoute(orderID, route);
+                    await _transportCarbonManager.SaveShippingMethod(orderID, route.SelectedMethod);
+                    loggedCarbon = await _transportCarbonManager.CalculateCustomerDistanceCarbon(route.TotalDistanceKm, route.SelectedMethod);
+                    await _transportCarbonManager.LogCustomerEmission(orderID, loggedCarbon.Value);
+                }
 
                 return Ok(new
                 {
+                    orderID,
                     companyName = OutboundDistribution.CompanyLocationName,
                     companyPostalCode = OutboundDistribution.CompanyPostalCode,
                     customerPostalCode,
@@ -280,6 +302,7 @@ namespace CleanBrilliant.Controllers
                     durationMin = Math.Round(route.TotalDurationMin, 2),
                     routeChain = route.Formula,
                     formula = route.Formula,
+                    loggedTransportCarbon = loggedCarbon.HasValue ? Math.Round((double)loggedCarbon.Value, 4) : (double?)null,
                     legs = route.Legs.Select(leg => new
                     {
                         method = leg.Method,
@@ -302,9 +325,9 @@ namespace CleanBrilliant.Controllers
         }
 
         [HttpGet("logs")]
-        public async Task<IActionResult> GetCarbonLogs()
+        public async Task<IActionResult> GetCarbonLogs([FromQuery] int page = 1, [FromQuery] int pageSize = 10)
         {
-            var logs = await _carbonDataAggregator.GetCarbonLogs();
+            var logs = await _carbonDataAggregator.GetCarbonLogs(page, pageSize);
             return Ok(logs);
         }
 

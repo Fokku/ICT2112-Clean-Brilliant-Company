@@ -229,10 +229,24 @@ namespace CleanBrilliant.Domain.Control
             };
         }
 
-        public async Task SaveShippingMethod(string shippingMethod)
+        public async Task SaveShippingMethod(string orderID, string shippingMethod)
         {
-            // Placeholder - needs order context
-            await Task.CompletedTask;
+            if (string.IsNullOrWhiteSpace(orderID) || string.IsNullOrWhiteSpace(shippingMethod))
+            {
+                return;
+            }
+
+            var existingMethod = await _shippingMethodGateway.FindShippingMethod(orderID);
+            if (string.IsNullOrWhiteSpace(existingMethod))
+            {
+                await _shippingMethodGateway.InsertShippingMethod(orderID, shippingMethod);
+                return;
+            }
+
+            if (!string.Equals(existingMethod, shippingMethod, StringComparison.OrdinalIgnoreCase))
+            {
+                await _shippingMethodGateway.UpdateShippingMethod(orderID, shippingMethod);
+            }
         }
     }
 }

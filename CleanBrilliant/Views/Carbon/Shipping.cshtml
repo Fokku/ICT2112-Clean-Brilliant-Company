@@ -82,10 +82,21 @@
                 <div id="restock-summary-result" class="mt-3" style="display:none;"></div>
             </div>
         </div>
+
+        <div class="card mb-3">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <h6 class="text-uppercase text-muted fw-semibold mb-0" style="font-size:.82rem;letter-spacing:.5px;">Total Carbon Logs</h6>
+                    <a href="#" id="toggle-logs" class="text-decoration-none" style="font-size:.9rem;">View Carbon Calculation Logs</a>
+                </div>
+                <div id="carbon-logs" class="mt-3" style="display:none;"></div>
+            </div>
+        </div>
     </div>
 </div>
 
 @section Scripts {
     <script src="~/js/carbon.js" asp-append-version="true"></script>
+    <script src="~/js/shipping-logs.js" asp-append-version="true"></script>
     <script>$(function () { Carbon.initShipping(); });</script>
 }

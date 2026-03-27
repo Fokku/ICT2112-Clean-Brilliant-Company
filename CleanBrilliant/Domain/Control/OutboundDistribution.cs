@@ -70,6 +70,20 @@ namespace CleanBrilliant.Domain.Control
             return await Task.FromResult(routeData.DurationMin);
         }
 
+        public async Task LogCalculatedRoute(string orderID, OutboundRouteResult route)
+        {
+            if (string.IsNullOrWhiteSpace(orderID))
+            {
+                return;
+            }
+
+            await _gateway.Insert(
+                orderID,
+                Guid.NewGuid().ToString(),
+                route.TotalDistanceKm,
+                route.TotalDurationMin);
+        }
+
         public async Task<OutboundRouteResult> CalculateOutboundRoute(
             string customerPostalCode,
             string shippingMethod,

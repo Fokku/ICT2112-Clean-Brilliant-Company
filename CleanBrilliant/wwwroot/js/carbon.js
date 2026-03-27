@@ -1,6 +1,7 @@
 // Carbon Footprint Module — Frontend AJAX Logic
 var Carbon = (function ($) {
     'use strict';
+    var shippingLogsState = { page: 1, pageSize: 10 };
 
     // Enum display mappings (backend serializes enums as integers)
     var WorkMode = { 0: 'Remote', 1: 'Onsite' };
@@ -60,6 +61,10 @@ var Carbon = (function ($) {
         return date.toLocaleString();
     }
 
+    function escapeHtml(value) {
+        return $('<div>').text(value == null ? '' : value).html();
+    }
+
     function renderShippingBreakdown(result) {
         var distanceText = result.distanceKm != null ? result.distanceKm + ' km' : 'N/A';
         var coefficientText = result.coefficient != null ? result.coefficient : 'N/A';
@@ -106,6 +111,13 @@ var Carbon = (function ($) {
 
     function renderHubLookup(result) {
         var routeChain = result.routeChain || result.formula;
+        var loggingHtml = result.orderID || result.loggedTransportCarbon != null
+            ? '<div class="p-2 rounded mb-2" style="background:#eff6ff;border:1px solid #bfdbfe;">' +
+                '<div><strong>Operational logging completed</strong></div>' +
+                (result.orderID ? '<div class="text-muted" style="font-size:.9rem;">Order ID: ' + result.orderID + '</div>' : '') +
+                (result.loggedTransportCarbon != null ? '<div class="text-muted" style="font-size:.9rem;">Logged transport carbon: ' + result.loggedTransportCarbon + ' tonnes CO\u2082</div>' : '') +
+              '</div>'
+            : '';
         var legsHtml = '';
         if (Array.isArray(result.legs)) {
             result.legs.forEach(function (leg, index) {
@@ -123,6 +135,7 @@ var Carbon = (function ($) {
 
         return '' +
             '<div class="p-3 rounded" style="background:#f8fafc;border:1px solid #e2e8f0;">' +
+            loggingHtml +
             '<div class="d-flex justify-content-between mb-2"><span class="text-muted">Company</span><span class="fw-semibold">' + result.companyName + '</span></div>' +
             '<div class="d-flex justify-content-between mb-2"><span class="text-muted">Customer Location</span><span class="fw-semibold">' + result.customerPostalCode + '</span></div>' +
             '<div class="d-flex justify-content-between mb-2"><span class="text-muted">Country</span><span class="fw-semibold">' + result.countryCode + '</span></div>' +
@@ -158,8 +171,16 @@ var Carbon = (function ($) {
 
     function renderInboundLookup(result) {
         var routeChain = result.routeChain || (result.warehouseName + ' -> ' + result.companyName);
+        var loggingHtml = result.restockID || result.loggedTransportCarbon != null
+            ? '<div class="p-2 rounded mb-2" style="background:#eff6ff;border:1px solid #bfdbfe;">' +
+                '<div><strong>Operational logging completed</strong></div>' +
+                (result.restockID ? '<div class="text-muted" style="font-size:.9rem;">Restock ID: ' + result.restockID + '</div>' : '') +
+                (result.loggedTransportCarbon != null ? '<div class="text-muted" style="font-size:.9rem;">Logged transport carbon: ' + result.loggedTransportCarbon + ' tonnes CO\u2082</div>' : '') +
+              '</div>'
+            : '';
         return '' +
             '<div class="p-3 rounded" style="background:#f8fafc;border:1px solid #e2e8f0;">' +
+            loggingHtml +
             '<div class="d-flex justify-content-between mb-2"><span class="text-muted">Company</span><span class="fw-semibold">' + result.companyName + '</span></div>' +
             '<div class="d-flex justify-content-between mb-2"><span class="text-muted">Warehouse</span><span class="fw-semibold">' + result.warehouseName + '</span></div>' +
             '<div class="d-flex justify-content-between mb-2"><span class="text-muted">Method</span><span class="fw-semibold">' + result.shippingMethod + '</span></div>' +
@@ -255,11 +276,13 @@ var Carbon = (function ($) {
             var customerPostalCode = $('#customer-postal-code').val();
             var countryCode = $('#country-code').val();
             var method = $('#transport-method').val();
+            var orderId = $('#outbound-order-id').val();
 
             $.get('/api/carbon/outbound-route', {
                 customerPostalCode: customerPostalCode,
                 method: method,
-                countryCode: countryCode
+                countryCode: countryCode,
+                orderID: orderId
             }, function (result) {
                 clearError('#hub-lookup-container');
                 $('#hub-lookup-result').html(renderHubLookup(result)).show();
@@ -278,6 +301,7 @@ var Carbon = (function ($) {
             setLoading(btn, true);
 
             var warehouseId = $('#inbound-warehouse-select').val();
+            var restockId = $('#inbound-restock-id').val();
             if (!warehouseId) {
                 showError('#hub-lookup-container', 'Select a warehouse for inbound testing.');
                 setLoading(btn, false, 'Test Inbound Route');
@@ -286,7 +310,8 @@ var Carbon = (function ($) {
             }
 
             $.get('/api/carbon/inbound-route', {
-                warehouseId: warehouseId
+                warehouseId: warehouseId,
+                restockID: restockId
             }, function (result) {
                 clearError('#hub-lookup-container');
                 $('#inbound-route-result').html(renderInboundLookup(result)).show();

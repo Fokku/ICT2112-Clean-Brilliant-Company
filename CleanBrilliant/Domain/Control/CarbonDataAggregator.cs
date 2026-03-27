@@ -1,6 +1,8 @@
 using CleanBrilliant.Data.Interfaces;
 using CleanBrilliant.Domain.BoundaryInterface;
 using CleanBrilliant.Domain.DomainInterface;
+using CleanBrilliant.DTO;
+using System.Data;
 
 namespace CleanBrilliant.Domain.Control
 {
@@ -130,23 +132,82 @@ namespace CleanBrilliant.Domain.Control
             return preShipmentData?.TotalPreShipmentCarbon ?? 0f;
         }
 
-        public async Task<List<float>> GetCarbonLogs()
+        public async Task<CarbonLogPageDTO> GetCarbonLogs(int page, int pageSize)
         {
-            var results = new List<float>();
+            var safePage = Math.Max(1, page);
+            var safePageSize = Math.Clamp(pageSize, 1, 50);
+            var rawEntries = new List<(string ReferenceId, string RecordType, float TotalCarbon, float? Timestamp)>();
 
             var customerTable = await _customerCarbonDataGateway.FindAll();
-            foreach (System.Data.DataRow row in customerTable.Rows)
+            foreach (DataRow row in customerTable.Rows)
             {
-                results.Add(Convert.ToSingle(row["carbon_amount"]));
+                rawEntries.Add(BuildRawLogEntry(row, "customer"));
             }
 
             var supplierTable = await _supplierCarbonDataGateway.FindAll();
-            foreach (System.Data.DataRow row in supplierTable.Rows)
+            foreach (DataRow row in supplierTable.Rows)
             {
-                results.Add(Convert.ToSingle(row["carbon_amount"]));
+                rawEntries.Add(BuildRawLogEntry(row, "supplier"));
             }
 
-            return results;
+            var orderedEntries = rawEntries
+                .OrderByDescending(log => log.Timestamp ?? float.MinValue)
+                .ThenBy(log => log.RecordType)
+                .ThenBy(log => log.ReferenceId)
+                .ToList();
+
+            var totalCount = orderedEntries.Count;
+            var totalPages = totalCount == 0 ? 0 : (int)Math.Ceiling(totalCount / (double)safePageSize);
+            var pageItems = orderedEntries
+                .Skip((safePage - 1) * safePageSize)
+                .Take(safePageSize)
+                .ToList();
+
+            var items = new List<CarbonLogEntryDTO>();
+            foreach (var rawEntry in pageItems)
+            {
+                items.Add(await BuildLogEntryAsync(rawEntry.ReferenceId, rawEntry.RecordType, rawEntry.TotalCarbon, rawEntry.Timestamp));
+            }
+
+            return new CarbonLogPageDTO
+            {
+                Page = safePage,
+                PageSize = safePageSize,
+                TotalCount = totalCount,
+                TotalPages = totalPages,
+                Items = items
+            };
+        }
+
+        private static (string ReferenceId, string RecordType, float TotalCarbon, float? Timestamp) BuildRawLogEntry(DataRow row, string recordType)
+        {
+            var isCustomer = string.Equals(recordType, "customer", StringComparison.OrdinalIgnoreCase);
+            var referenceColumn = isCustomer ? "order_id" : "restock_id";
+            var referenceId = Convert.ToString(row[referenceColumn]) ?? string.Empty;
+            var totalCarbon = Convert.ToSingle(row["carbon_amount"]);
+            float? timestamp = row["timestamp"] == DBNull.Value ? null : Convert.ToSingle(row["timestamp"]);
+
+            return (referenceId, recordType, totalCarbon, timestamp);
+        }
+
+        private async Task<CarbonLogEntryDTO> BuildLogEntryAsync(string referenceId, string recordType, float totalCarbon, float? timestamp)
+        {
+            var isCustomer = string.Equals(recordType, "customer", StringComparison.OrdinalIgnoreCase);
+            var preShipmentCarbon = GetPreShipmentCarbon(referenceId);
+            var shippingCarbon = isCustomer
+                ? await _getCarbonData.GetOrderShippingCarbon(referenceId)
+                : await _getCarbonData.GetRestockShippingCarbon(referenceId);
+
+            return new CarbonLogEntryDTO
+            {
+                ReferenceId = referenceId,
+                RecordType = recordType,
+                TotalCarbon = totalCarbon,
+                ShippingCarbon = shippingCarbon,
+                PreShipmentCarbon = preShipmentCarbon,
+                Timestamp = timestamp,
+                Formula = $"{preShipmentCarbon:0.##} + {shippingCarbon:0.##} = {totalCarbon:0.##} tonnes CO2"
+            };
         }
     }
 }

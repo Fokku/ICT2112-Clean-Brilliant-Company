@@ -2,6 +2,6 @@ namespace CleanBrilliant.Domain.DomainInterface
 {
     public interface ISaveShippingMethod
     {
-        Task SaveShippingMethod(string shippingMethod);
+        Task SaveShippingMethod(string orderID, string shippingMethod);
     }
 }

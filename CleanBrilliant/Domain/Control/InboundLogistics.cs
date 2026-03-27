@@ -55,6 +55,22 @@ namespace CleanBrilliant.Domain.Control
             return Convert.ToSingle(table.Rows[0]["distance_km"]);
         }
 
+        public async Task LogCalculatedRoute(string restockID, PostalRouteCalculationDTO route)
+        {
+            if (string.IsNullOrWhiteSpace(restockID))
+            {
+                return;
+            }
+
+            float timeStamp = (float)DateTimeOffset.UtcNow.ToUnixTimeSeconds();
+            await _gateway.Insert(
+                restockID,
+                Guid.NewGuid().ToString(),
+                route.DistanceKm,
+                route.DurationMin,
+                timeStamp);
+        }
+
         protected override async Task<float> CalculateSpecificSegments()
         {
             if (_routeData == null) return 0f;

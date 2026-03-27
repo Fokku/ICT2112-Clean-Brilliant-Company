@@ -16,6 +16,10 @@
                         <h6 class="text-uppercase text-muted fw-semibold mb-3" style="font-size:.82rem;letter-spacing:.5px;">Inbound Route Test</h6>
                         <form id="inbound-route-form">
                             <div class="mb-3">
+                                <label for="inbound-restock-id" class="form-label" style="font-size:.85rem;">Restock ID (optional for logging)</label>
+                                <input type="text" class="form-control" id="inbound-restock-id" placeholder="e.g. R1001">
+                            </div>
+                            <div class="mb-3">
                                 <label for="inbound-warehouse-select" class="form-label" style="font-size:.85rem;">Warehouse</label>
                                 <select class="form-select" id="inbound-warehouse-select" required>
                                     <option value="">Loading warehouses...</option>
@@ -32,6 +36,10 @@
                     <div class="card-body">
                         <h6 class="text-uppercase text-muted fw-semibold mb-3" style="font-size:.82rem;letter-spacing:.5px;">Outbound Route Chain</h6>
                         <form id="hub-lookup-form">
+                            <div class="mb-3">
+                                <label for="outbound-order-id" class="form-label" style="font-size:.85rem;">Order ID (optional for logging)</label>
+                                <input type="text" class="form-control" id="outbound-order-id" placeholder="e.g. O1001">
+                            </div>
                             <div class="mb-3">
                                 <label for="country-code" class="form-label" style="font-size:.85rem;">Customer Country</label>
                                 <select class="form-select" id="country-code" required>

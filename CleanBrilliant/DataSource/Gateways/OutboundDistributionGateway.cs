@@ -38,7 +38,9 @@ namespace CleanBrilliant.Data.Gateways
             const string sql = @"
                 SELECT order_id, customer_route_dist_id, distance_km, duration_min, timestamp
                 FROM outbound_distribution
-                WHERE order_id = @orderID;";
+                WHERE order_id = @orderID
+                ORDER BY timestamp DESC
+                LIMIT 1;";
 
             var ds = new DataSet();
 
