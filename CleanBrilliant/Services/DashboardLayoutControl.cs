@@ -2,7 +2,6 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using System.Text.Json; 
 using CleanBrilliant.Models;
 using CleanBrilliant.Data.Gateways;
 using CleanBrilliant.Interfaces; // 1. Added for interfaces
@@ -14,12 +13,14 @@ namespace CleanBrilliant.Services
     {
         private readonly DashboardLayoutGateway _dbGateway; 
         private readonly IWidgetManager _widgetManager; // 3. Added Dependency
+        private readonly DashboardLayoutSerializer _serializer;
 
         // 4. Injected IWidgetManager
-        public DashboardLayoutControl(DashboardLayoutGateway dbGateway, IWidgetManager widgetManager) 
+        public DashboardLayoutControl(DashboardLayoutGateway dbGateway, IWidgetManager widgetManager, DashboardLayoutSerializer serializer) 
         {
             _dbGateway = dbGateway;
             _widgetManager = widgetManager;
+            _serializer = serializer;
         }
 
         public async Task<List<DashboardLayout>> GetAllLayouts()
@@ -39,8 +40,7 @@ namespace CleanBrilliant.Services
                 string jsonBlob = Convert.ToString(row["gridWidgetConfig"]);
                 if (!string.IsNullOrWhiteSpace(jsonBlob) && jsonBlob != "[]")
                 {
-                    layout.Placements = JsonSerializer.Deserialize<List<GridPlacement>>(jsonBlob, new JsonSerializerOptions { PropertyNameCaseInsensitive = true }) 
-                                        ?? new List<GridPlacement>();
+                    layout.Placements = _serializer.DeserializePlacements(jsonBlob);
                 }
 
                 layouts.Add(layout);
@@ -65,8 +65,7 @@ namespace CleanBrilliant.Services
                 string jsonBlob = Convert.ToString(row["gridWidgetConfig"]);
                 if (!string.IsNullOrWhiteSpace(jsonBlob) && jsonBlob != "[]")
                 {
-                    layout.Placements = JsonSerializer.Deserialize<List<GridPlacement>>(jsonBlob, new JsonSerializerOptions { PropertyNameCaseInsensitive = true }) 
-                                        ?? new List<GridPlacement>();
+                    layout.Placements = _serializer.DeserializePlacements(jsonBlob);
                 }
                 
                 return layout;
@@ -76,7 +75,7 @@ namespace CleanBrilliant.Services
 
         public async Task SaveLayout(DashboardLayout layout)
         {
-            string jsonBlob = JsonSerializer.Serialize(layout.Placements);
+            string jsonBlob = _serializer.SerializePlacements(layout.Placements);
             await _dbGateway.SaveOrUpdate(layout.LayoutId, layout.LayoutName, layout.IsDefault, jsonBlob);
         }
 
