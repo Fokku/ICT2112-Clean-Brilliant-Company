@@ -18,10 +18,31 @@ namespace CleanBrilliant.Controllers
         public async Task<IActionResult> GetShippingRecommendation(
             [FromQuery] string postalCode = "",
             [FromQuery] string deliveryType = "",
-            [FromQuery] string countryCode = "")
+            [FromQuery] string countryCode = "",
+            [FromQuery] string strategy = "rules")
         {
+            if (string.Equals(strategy, "duration", StringComparison.OrdinalIgnoreCase))
+            {
+                var result = await _carbonAnalysis.GetShippingRecommendationByDuration(postalCode, deliveryType, countryCode);
+                return Ok(new
+                {
+                    recommendation = result.Recommendation,
+                    strategy = result.Strategy,
+                    deliveryType = result.DeliveryType,
+                    candidates = result.Candidates.Select(candidate => new
+                    {
+                        method = candidate.Method,
+                        distanceKm = candidate.DistanceKm,
+                        durationMin = candidate.DurationMin,
+                        averageSpeedKmPerHour = candidate.AverageSpeedKmPerHour,
+                        estimatedCarbon = candidate.EstimatedCarbon,
+                        routeChain = candidate.RouteChain
+                    })
+                });
+            }
+
             var recommendation = await _carbonAnalysis.GetShippingRecommendation(postalCode, deliveryType, countryCode);
-            return Ok(new { recommendation });
+            return Ok(new { recommendation, strategy = "rules" });
         }
 
         [HttpGet("analyze")]

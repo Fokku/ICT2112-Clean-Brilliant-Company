@@ -31,6 +31,13 @@
                             <label for="analysis-country" class="form-label" style="font-size:.85rem;">Country</label>
                             <input type="text" class="form-control" id="analysis-country" value="SG">
                         </div>
+                        <div class="col">
+                            <label for="analysis-strategy" class="form-label" style="font-size:.85rem;">Mode</label>
+                            <select class="form-select" id="analysis-strategy" required>
+                                <option value="rules" selected>Current Rules</option>
+                                <option value="duration">Route Duration</option>
+                            </select>
+                        </div>
                         <div class="col-auto">
                             <button type="submit" class="btn btn-primary">Get Recommendation</button>
                         </div>

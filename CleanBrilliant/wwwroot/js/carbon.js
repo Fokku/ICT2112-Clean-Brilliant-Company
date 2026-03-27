@@ -134,6 +134,28 @@ var Carbon = (function ($) {
             '</div>';
     }
 
+    function renderRecommendation(result) {
+        var strategyLabel = result.strategy === 'duration' ? 'Route Duration' : 'Current Rules';
+        var html = '' +
+            '<div><strong>Recommended:</strong> ' + result.recommendation + '</div>' +
+            '<div class="text-muted mt-1">Mode: ' + strategyLabel + '</div>';
+
+        if (result.strategy === 'duration' && Array.isArray(result.candidates) && result.candidates.length > 0) {
+            html += '<div class="mt-3">';
+            result.candidates.forEach(function (candidate) {
+                html += '' +
+                    '<div class="p-2 rounded mb-2" style="background:#ffffff;border:1px solid #dbe4ee;">' +
+                    '<div><strong>' + candidate.method + '</strong></div>' +
+                    '<div class="text-muted" style="font-size:.9rem;">Duration: ' + candidate.durationMin.toFixed(2) + ' min | Speed: ' + candidate.averageSpeedKmPerHour.toFixed(2) + ' km/h | Carbon: ' + candidate.estimatedCarbon.toFixed(2) + ' tonnes CO\u2082</div>' +
+                    '<div class="text-muted" style="font-size:.9rem;">Route: ' + candidate.routeChain + '</div>' +
+                    '</div>';
+            });
+            html += '</div>';
+        }
+
+        return html;
+    }
+
     function renderInboundLookup(result) {
         var routeChain = result.routeChain || (result.warehouseName + ' -> ' + result.companyName);
         return '' +
@@ -604,14 +626,16 @@ var Carbon = (function ($) {
             var postal = $('#analysis-postal').val();
             var delivery = $('#analysis-delivery').val();
             var country = $('#analysis-country').val();
+            var strategy = $('#analysis-strategy').val();
 
             $.get('/api/carbon-analysis/recommend?postalCode=' + encodeURIComponent(postal) +
                 '&deliveryType=' + encodeURIComponent(delivery) +
-                '&countryCode=' + encodeURIComponent(country),
+                '&countryCode=' + encodeURIComponent(country) +
+                '&strategy=' + encodeURIComponent(strategy),
                 function (data) {
                     $('#recommend-result').html(
                         '<div class="p-3 rounded" style="background:#f0fdf4;border:1px solid #bbf7d0;">' +
-                        '<strong>Recommended:</strong> ' + data.recommendation +
+                        renderRecommendation(data) +
                         '</div>'
                     ).show();
                     setLoading(btn, false, 'Get Recommendation');

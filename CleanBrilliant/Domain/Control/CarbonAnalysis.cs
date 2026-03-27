@@ -1,4 +1,5 @@
 using CleanBrilliant.Domain.DomainInterface;
+using CleanBrilliant.Domain.Entity;
 
 namespace CleanBrilliant.Domain.Control
 {
@@ -17,10 +18,17 @@ namespace CleanBrilliant.Domain.Control
         private readonly float _highThreshold = 200.0f;
 
         private readonly CleanBrilliant.Services.ICoefficientManager _coefficientManager;
+        private readonly IEstimatedTimeService _estimatedTimeService;
+        private readonly OutboundDistribution _outboundDistribution;
 
-        public CarbonAnalysis(CleanBrilliant.Services.ICoefficientManager coefficientManager)
+        public CarbonAnalysis(
+            CleanBrilliant.Services.ICoefficientManager coefficientManager,
+            IEstimatedTimeService estimatedTimeService,
+            OutboundDistribution outboundDistribution)
         {
             _coefficientManager = coefficientManager;
+            _estimatedTimeService = estimatedTimeService;
+            _outboundDistribution = outboundDistribution;
         }
 
         public string Analyze(float totalCarbon)
@@ -80,6 +88,47 @@ namespace CleanBrilliant.Domain.Control
             return await Task.FromResult("truck");
         }
 
+        public async Task<RecommendationResult> GetShippingRecommendationByDuration(
+            string postalCode,
+            string deliveryType,
+            string countryCode)
+        {
+            var candidateMethods = GetCandidateMethods(countryCode);
+            var candidates = new List<RecommendationCandidate>();
+
+            foreach (var method in candidateMethods)
+            {
+                var route = await _outboundDistribution.CalculateOutboundRoute(postalCode, method, countryCode);
+                var routeData = new CustomerRouteData
+                {
+                    OrderId = string.Empty,
+                    DistanceKm = route.TotalDistanceKm,
+                    DurationMin = route.TotalDurationMin
+                };
+
+                var estimatedDurationMin = await _estimatedTimeService.GetOrderEstimatedTime(string.Empty, routeData);
+                var estimatedCarbon = EstimateShippingCarbon(method, route.TotalDistanceKm);
+                var averageSpeedKmPerHour = estimatedDurationMin <= 0f
+                    ? 0f
+                    : route.TotalDistanceKm / (estimatedDurationMin / 60f);
+
+                candidates.Add(new RecommendationCandidate(
+                    method,
+                    route.TotalDistanceKm,
+                    estimatedDurationMin,
+                    averageSpeedKmPerHour,
+                    estimatedCarbon,
+                    route.Formula));
+            }
+
+            var recommendation = SelectDurationBasedRecommendation(candidates, deliveryType);
+            return new RecommendationResult(
+                recommendation.Method,
+                "duration",
+                deliveryType,
+                candidates.OrderBy(candidate => candidate.DurationMin).ToList());
+        }
+
         private string RecommendLowestShippingMethodForMalaysia(string deliveryType)
         {
             string best = "truck";
@@ -107,6 +156,46 @@ namespace CleanBrilliant.Domain.Control
             }
 
             return best;
+        }
+
+        private static IReadOnlyList<string> GetCandidateMethods(string countryCode)
+        {
+            if (IsSingaporeDestination(countryCode))
+            {
+                return ["truck"];
+            }
+
+            if (IsMalaysiaDestination(countryCode))
+            {
+                return ["truck", "air", "ship", "rail"];
+            }
+
+            return ["truck"];
+        }
+
+        private static RecommendationCandidate SelectDurationBasedRecommendation(
+            IReadOnlyList<RecommendationCandidate> candidates,
+            string deliveryType)
+        {
+            if (candidates.Count == 0)
+            {
+                return new RecommendationCandidate("truck", 0f, 0f, 0f, 0f, string.Empty);
+            }
+
+            var fastestDuration = candidates.Min(candidate => candidate.DurationMin);
+
+            IEnumerable<RecommendationCandidate> filteredCandidates = deliveryType switch
+            {
+                "1" => candidates.Where(candidate => candidate.DurationMin == fastestDuration),
+                "2" => candidates.Where(candidate => candidate.DurationMin <= fastestDuration * 1.5f),
+                "3" => candidates,
+                _ => candidates
+            };
+
+            return filteredCandidates
+                .OrderBy(candidate => candidate.EstimatedCarbon)
+                .ThenBy(candidate => candidate.DurationMin)
+                .First();
         }
 
         private float GetConfiguredCoefficient(string method)
@@ -152,5 +241,19 @@ namespace CleanBrilliant.Domain.Control
             var normalized = (countryCode ?? string.Empty).Trim().ToLowerInvariant();
             return normalized is "my" or "mys" or "malaysia";
         }
+
+        public sealed record RecommendationCandidate(
+            string Method,
+            float DistanceKm,
+            float DurationMin,
+            float AverageSpeedKmPerHour,
+            float EstimatedCarbon,
+            string RouteChain);
+
+        public sealed record RecommendationResult(
+            string Recommendation,
+            string Strategy,
+            string DeliveryType,
+            IReadOnlyList<RecommendationCandidate> Candidates);
     }
 }

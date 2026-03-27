@@ -46,10 +46,20 @@ namespace CleanBrilliant.Domain.Control
             return CalculateCarbonFromDistance(customerDistanceKm, shippingMethod);
         }
 
+        public Task<float> CalculateCustomerDistanceCarbon(float distanceKm, string shippingMethod)
+        {
+            return Task.FromResult(CalculateCarbonFromDistance(distanceKm, shippingMethod));
+        }
+
         public async Task<float> CalculateSupplierDistanceCarbon(string restockID, string shippingMethod)
         {
             float supplierDistanceKm = await _restockDistanceService.GetRestockDistance(restockID);
             return CalculateCarbonFromDistance(supplierDistanceKm, "truck");
+        }
+
+        public Task<float> CalculateSupplierDistanceCarbon(float distanceKm, string shippingMethod)
+        {
+            return Task.FromResult(CalculateCarbonFromDistance(distanceKm, "truck"));
         }
 
         public async Task LogCustomerEmission(string orderID, float distanceCarbon)
