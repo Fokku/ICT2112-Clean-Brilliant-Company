@@ -30,6 +30,18 @@ namespace CleanBrilliant.Controllers
             return View();
         }
 
+        [HttpGet("ShippingDistanceCarbon")]
+        public IActionResult ShippingDistanceCarbon()
+        {
+            return View();
+        }
+
+        [HttpGet("CarbonDataAggregation")]
+        public IActionResult CarbonDataAggregation()
+        {
+            return View();
+        }
+
         [HttpGet("Analysis")]
         public IActionResult Analysis()
         {

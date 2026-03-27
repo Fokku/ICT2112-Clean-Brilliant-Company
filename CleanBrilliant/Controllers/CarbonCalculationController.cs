@@ -160,12 +160,11 @@ namespace CleanBrilliant.Controllers
                 var route = await _inboundLogistics.CalculateInboundRoute(warehouseId);
                 string? restockId = Request.Query["restockID"].FirstOrDefault();
 
-                float? loggedCarbon = null;
+                var loggedCarbon = await _transportCarbonManager.CalculateSupplierDistanceCarbon(route.DistanceKm, "truck");
                 if (!string.IsNullOrWhiteSpace(restockId))
                 {
                     await _inboundLogistics.LogCalculatedRoute(restockId, route);
-                    loggedCarbon = await _transportCarbonManager.CalculateSupplierDistanceCarbon(route.DistanceKm, "truck");
-                    await _transportCarbonManager.LogRestockEmission(restockId, loggedCarbon.Value);
+                    await _transportCarbonManager.LogRestockEmission(restockId, loggedCarbon);
                 }
 
                 return Ok(new
@@ -185,7 +184,7 @@ namespace CleanBrilliant.Controllers
                     distanceKm = Math.Round(route.DistanceKm, 2),
                     durationMin = Math.Round(route.DurationMin, 2),
                     formula = route.Formula,
-                    loggedTransportCarbon = loggedCarbon.HasValue ? Math.Round((double)loggedCarbon.Value, 4) : (double?)null
+                    loggedTransportCarbon = Math.Round((double)loggedCarbon, 4)
                 });
             }
             catch (InvalidOperationException ex)
@@ -280,14 +279,13 @@ namespace CleanBrilliant.Controllers
             try
             {
                 var route = await _outboundDistribution.CalculateOutboundRoute(customerPostalCode, method, countryCode);
-                float? loggedCarbon = null;
+                var loggedCarbon = await _transportCarbonManager.CalculateCustomerDistanceCarbon(route.TotalDistanceKm, route.SelectedMethod);
 
                 if (!string.IsNullOrWhiteSpace(orderID))
                 {
                     await _outboundDistribution.LogCalculatedRoute(orderID, route);
                     await _transportCarbonManager.SaveShippingMethod(orderID, route.SelectedMethod);
-                    loggedCarbon = await _transportCarbonManager.CalculateCustomerDistanceCarbon(route.TotalDistanceKm, route.SelectedMethod);
-                    await _transportCarbonManager.LogCustomerEmission(orderID, loggedCarbon.Value);
+                    await _transportCarbonManager.LogCustomerEmission(orderID, loggedCarbon);
                 }
 
                 return Ok(new
@@ -302,7 +300,7 @@ namespace CleanBrilliant.Controllers
                     durationMin = Math.Round(route.TotalDurationMin, 2),
                     routeChain = route.Formula,
                     formula = route.Formula,
-                    loggedTransportCarbon = loggedCarbon.HasValue ? Math.Round((double)loggedCarbon.Value, 4) : (double?)null,
+                    loggedTransportCarbon = Math.Round((double)loggedCarbon, 4),
                     legs = route.Legs.Select(leg => new
                     {
                         method = leg.Method,
@@ -328,6 +326,20 @@ namespace CleanBrilliant.Controllers
         public async Task<IActionResult> GetCarbonLogs([FromQuery] int page = 1, [FromQuery] int pageSize = 10)
         {
             var logs = await _carbonDataAggregator.GetCarbonLogs(page, pageSize);
+            return Ok(logs);
+        }
+
+        [HttpGet("distance-logs")]
+        public async Task<IActionResult> GetDistanceCarbonLogs()
+        {
+            var logs = await _transportCarbonManager.GetDistanceCarbonLogs();
+            return Ok(logs);
+        }
+
+        [HttpGet("route-logs")]
+        public async Task<IActionResult> GetRouteLogs()
+        {
+            var logs = await _transportCarbonManager.GetRouteLogs();
             return Ok(logs);
         }
 

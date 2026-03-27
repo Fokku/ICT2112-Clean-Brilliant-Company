@@ -1,95 +1,215 @@
 @{
-    ViewData["Title"] = "Shipping Carbon Lookup";
+    ViewData["Title"] = "Shipping Carbon";
 }
 
 <div class="container py-4" id="shipping-container">
     <div class="d-flex justify-content-between align-items-center mb-4">
-        <h2 class="mb-0">Shipping Carbon Lookup</h2>
+        <h2 class="mb-0">Shipping Carbon</h2>
         <a href="/Carbon" class="text-decoration-none" style="font-size:.9rem;">← Back to Dashboard</a>
     </div>
 
-    <div style="max-width:600px;margin:0 auto;">
-        <!-- Customer Order Lookup -->
-        <div class="card mb-3">
-            <div class="card-body">
-                <h6 class="text-uppercase text-muted fw-semibold mb-3" style="font-size:.82rem;letter-spacing:.5px;">Customer Distance Carbon</h6>
-                <form id="order-lookup-form">
-                    <div class="row g-2 align-items-end">
-                        <div class="col">
-                            <label for="ship-order-id" class="form-label" style="font-size:.85rem;">Order ID</label>
-                            <input type="text" class="form-control" id="ship-order-id" required>
+    <div class="row g-4">
+        <div class="col-lg-6" id="distance-carbon-section">
+            <div class="card mb-3">
+                <div class="card-body">
+                    <h6 class="text-uppercase text-muted fw-semibold mb-3" style="font-size:.82rem;letter-spacing:.5px;">Customer Distance Carbon</h6>
+                    <form id="order-lookup-form">
+                        <div class="row g-2 align-items-end">
+                            <div class="col">
+                                <label for="ship-order-id" class="form-label" style="font-size:.85rem;">Order ID</label>
+                                <input type="text" class="form-control" id="ship-order-id" required>
+                            </div>
+                            <div class="col-auto">
+                                <button type="submit" class="btn btn-primary">Lookup</button>
+                            </div>
                         </div>
-                        <div class="col-auto">
-                            <button type="submit" class="btn btn-primary">Lookup</button>
-                        </div>
-                    </div>
-                </form>
-                <div id="order-result" class="mt-3" style="display:none;"></div>
-            </div>
-        </div>
-
-        <!-- Supplier Restock Lookup -->
-        <div class="card mb-3">
-            <div class="card-body">
-                <h6 class="text-uppercase text-muted fw-semibold mb-3" style="font-size:.82rem;letter-spacing:.5px;">Supplier Distance Carbon</h6>
-                <form id="restock-lookup-form">
-                    <div class="row g-2 align-items-end">
-                        <div class="col">
-                            <label for="ship-restock-id" class="form-label" style="font-size:.85rem;">Restock ID</label>
-                            <input type="text" class="form-control" id="ship-restock-id" required>
-                        </div>
-                        <div class="col-auto">
-                            <button type="submit" class="btn btn-primary">Lookup</button>
-                        </div>
-                    </div>
-                </form>
-                <div id="restock-result" class="mt-3" style="display:none;"></div>
-            </div>
-        </div>
-
-        <div class="card mb-3">
-            <div class="card-body">
-                <h6 class="text-uppercase text-muted fw-semibold mb-3" style="font-size:.82rem;letter-spacing:.5px;">Customer Order Total Carbon Summary</h6>
-                <form id="order-summary-form">
-                    <div class="row g-2 align-items-end">
-                        <div class="col">
-                            <label for="summary-order-id" class="form-label" style="font-size:.85rem;">Order ID</label>
-                            <input type="text" class="form-control" id="summary-order-id" required>
-                        </div>
-                        <div class="col-auto">
-                            <button type="submit" class="btn btn-primary">Lookup</button>
-                        </div>
-                    </div>
-                </form>
-                <div id="order-summary-result" class="mt-3" style="display:none;"></div>
-            </div>
-        </div>
-
-        <div class="card mb-3">
-            <div class="card-body">
-                <h6 class="text-uppercase text-muted fw-semibold mb-3" style="font-size:.82rem;letter-spacing:.5px;">Supplier Restock Total Carbon Summary</h6>
-                <form id="restock-summary-form">
-                    <div class="row g-2 align-items-end">
-                        <div class="col">
-                            <label for="summary-restock-id" class="form-label" style="font-size:.85rem;">Restock ID</label>
-                            <input type="text" class="form-control" id="summary-restock-id" required>
-                        </div>
-                        <div class="col-auto">
-                            <button type="submit" class="btn btn-primary">Lookup</button>
-                        </div>
-                    </div>
-                </form>
-                <div id="restock-summary-result" class="mt-3" style="display:none;"></div>
-            </div>
-        </div>
-
-        <div class="card mb-3">
-            <div class="card-body">
-                <div class="d-flex justify-content-between align-items-center mb-2">
-                    <h6 class="text-uppercase text-muted fw-semibold mb-0" style="font-size:.82rem;letter-spacing:.5px;">Total Carbon Logs</h6>
-                    <a href="#" id="toggle-logs" class="text-decoration-none" style="font-size:.9rem;">View Carbon Calculation Logs</a>
+                    </form>
+                    <div id="order-result" class="mt-3" style="display:none;"></div>
                 </div>
-                <div id="carbon-logs" class="mt-3" style="display:none;"></div>
+            </div>
+
+            <div class="card mb-3">
+                <div class="card-body">
+                    <h6 class="text-uppercase text-muted fw-semibold mb-3" style="font-size:.82rem;letter-spacing:.5px;">Supplier Distance Carbon</h6>
+                    <form id="restock-lookup-form">
+                        <div class="row g-2 align-items-end">
+                            <div class="col">
+                                <label for="ship-restock-id" class="form-label" style="font-size:.85rem;">Restock ID</label>
+                                <input type="text" class="form-control" id="ship-restock-id" required>
+                            </div>
+                            <div class="col-auto">
+                                <button type="submit" class="btn btn-primary">Lookup</button>
+                            </div>
+                        </div>
+                    </form>
+                    <div id="restock-result" class="mt-3" style="display:none;"></div>
+                </div>
+            </div>
+
+            <div class="card mb-3">
+                <div class="card-body">
+                    <h6 class="text-uppercase text-muted fw-semibold mb-3" style="font-size:.82rem;letter-spacing:.5px;">Outbound Distance Carbon Calculation</h6>
+                <form id="live-outbound-shipping-form">
+                    <div class="row g-2">
+                        <div class="col-md-6">
+                            <label for="live-outbound-order-id" class="form-label" style="font-size:.85rem;">Order ID (Optional for Logging)</label>
+                            <input type="text" class="form-control" id="live-outbound-order-id">
+                        </div>
+                        <div class="col-md-6">
+                            <label for="live-outbound-customer-postal" class="form-label" style="font-size:.85rem;">Customer Postal Code</label>
+                            <input type="text" class="form-control" id="live-outbound-customer-postal" required>
+                        </div>
+                            <div class="col-md-6">
+                                <label for="live-outbound-country-code" class="form-label" style="font-size:.85rem;">Country</label>
+                                <select class="form-select" id="live-outbound-country-code">
+                                    <option value="SG">Singapore</option>
+                                    <option value="MY">Malaysia</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="live-outbound-method" class="form-label" style="font-size:.85rem;">Shipping Method</label>
+                                <select class="form-select" id="live-outbound-method">
+                                    <option value="truck">Truck</option>
+                                    <option value="ship">Boat</option>
+                                    <option value="air">Air</option>
+                                    <option value="rail">Train</option>
+                                </select>
+                            </div>
+                            <div class="col-12">
+                                <button type="submit" class="btn btn-primary">Calculate</button>
+                            </div>
+                        </div>
+                </form>
+                <div id="live-outbound-shipping-result" class="mt-3" style="display:none;"></div>
+                <div id="live-outbound-logging-result" class="mt-3" style="display:none;"></div>
+            </div>
+        </div>
+
+            <div class="card mb-3">
+                <div class="card-body">
+                    <h6 class="text-uppercase text-muted fw-semibold mb-3" style="font-size:.82rem;letter-spacing:.5px;">Inbound Distance Carbon Calculation</h6>
+                <form id="live-inbound-shipping-form">
+                    <div class="row g-2">
+                        <div class="col-md-6">
+                            <label for="live-inbound-restock-id" class="form-label" style="font-size:.85rem;">Restock ID (Optional for Logging)</label>
+                            <input type="text" class="form-control" id="live-inbound-restock-id">
+                        </div>
+                        <div class="col-md-6">
+                            <label for="live-inbound-warehouse" class="form-label" style="font-size:.85rem;">Warehouse</label>
+                            <select class="form-select" id="live-inbound-warehouse" required>
+                                <option value="">Loading warehouses...</option>
+                            </select>
+                            </div>
+                            <div class="col-12">
+                                <button type="submit" class="btn btn-primary">Calculate</button>
+                            </div>
+                        </div>
+                </form>
+                    <div id="live-inbound-shipping-result" class="mt-3" style="display:none;"></div>
+                    <div id="live-inbound-logging-result" class="mt-3" style="display:none;"></div>
+                </div>
+            </div>
+
+            <div class="card mb-3">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <h6 class="text-uppercase text-muted fw-semibold mb-0" style="font-size:.82rem;letter-spacing:.5px;">Distance Carbon Logs</h6>
+                        <a href="#" id="toggle-distance-logs" class="text-decoration-none" style="font-size:.9rem;">View Distance Carbon Logs</a>
+                    </div>
+                    <div id="distance-carbon-logs" class="mt-3" style="display:none;"></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-6" id="carbon-aggregation-section">
+            <div class="card mb-3">
+                <div class="card-body">
+                    <h6 class="text-uppercase text-muted fw-semibold mb-3" style="font-size:.82rem;letter-spacing:.5px;">Customer Order Total Carbon Summary</h6>
+                    <form id="order-summary-form">
+                        <div class="row g-2 align-items-end">
+                            <div class="col">
+                                <label for="summary-order-id" class="form-label" style="font-size:.85rem;">Order ID</label>
+                                <input type="text" class="form-control" id="summary-order-id" required>
+                            </div>
+                            <div class="col-auto">
+                                <button type="submit" class="btn btn-primary">Lookup</button>
+                            </div>
+                        </div>
+                    </form>
+                    <div id="order-summary-result" class="mt-3" style="display:none;"></div>
+                </div>
+            </div>
+
+            <div class="card mb-3">
+                <div class="card-body">
+                    <h6 class="text-uppercase text-muted fw-semibold mb-3" style="font-size:.82rem;letter-spacing:.5px;">Customer Order Total Carbon Calculation</h6>
+                    <form id="order-total-calc-form">
+                        <div class="row g-2 align-items-end">
+                            <div class="col-md-6">
+                                <label for="calc-pre-shipment-carbon" class="form-label" style="font-size:.85rem;">Pre-Shipment Carbon</label>
+                                <input type="number" step="0.0001" min="0" class="form-control" id="calc-pre-shipment-carbon" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="calc-shipping-carbon" class="form-label" style="font-size:.85rem;">Shipping Carbon</label>
+                                <input type="number" step="0.0001" min="0" class="form-control" id="calc-shipping-carbon" required>
+                            </div>
+                            <div class="col-auto">
+                                <button type="submit" class="btn btn-primary">Calculate</button>
+                            </div>
+                        </div>
+                    </form>
+                    <div id="order-total-calc-result" class="mt-3" style="display:none;"></div>
+                </div>
+            </div>
+
+            <div class="card mb-3">
+                <div class="card-body">
+                    <h6 class="text-uppercase text-muted fw-semibold mb-3" style="font-size:.82rem;letter-spacing:.5px;">Supplier Restock Total Carbon Summary</h6>
+                    <form id="restock-summary-form">
+                        <div class="row g-2 align-items-end">
+                            <div class="col">
+                                <label for="summary-restock-id" class="form-label" style="font-size:.85rem;">Restock ID</label>
+                                <input type="text" class="form-control" id="summary-restock-id" required>
+                            </div>
+                            <div class="col-auto">
+                                <button type="submit" class="btn btn-primary">Lookup</button>
+                            </div>
+                        </div>
+                    </form>
+                    <div id="restock-summary-result" class="mt-3" style="display:none;"></div>
+                </div>
+            </div>
+
+            <div class="card mb-3">
+                <div class="card-body">
+                    <h6 class="text-uppercase text-muted fw-semibold mb-3" style="font-size:.82rem;letter-spacing:.5px;">Supplier Restock Total Carbon Calculation</h6>
+                    <form id="restock-total-calc-form">
+                        <div class="row g-2 align-items-end">
+                            <div class="col-md-6">
+                                <label for="calc-restock-pre-shipment-carbon" class="form-label" style="font-size:.85rem;">Pre-Shipment Carbon</label>
+                                <input type="number" step="0.0001" min="0" class="form-control" id="calc-restock-pre-shipment-carbon" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="calc-restock-shipping-carbon" class="form-label" style="font-size:.85rem;">Shipping Carbon</label>
+                                <input type="number" step="0.0001" min="0" class="form-control" id="calc-restock-shipping-carbon" required>
+                            </div>
+                            <div class="col-auto">
+                                <button type="submit" class="btn btn-primary">Calculate</button>
+                            </div>
+                        </div>
+                    </form>
+                    <div id="restock-total-calc-result" class="mt-3" style="display:none;"></div>
+                </div>
+            </div>
+
+            <div class="card mb-3">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <h6 class="text-uppercase text-muted fw-semibold mb-0" style="font-size:.82rem;letter-spacing:.5px;">Total Carbon Logs</h6>
+                        <a href="#" id="toggle-logs" class="text-decoration-none" style="font-size:.9rem;">View Carbon Calculation Logs</a>
+                    </div>
+                    <div id="carbon-logs" class="mt-3" style="display:none;"></div>
+                </div>
             </div>
         </div>
     </div>

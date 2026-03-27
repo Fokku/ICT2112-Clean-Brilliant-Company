@@ -54,6 +54,26 @@ namespace CleanBrilliant.Data.Gateways
             return ds.Tables["supplier_transport_carbon"] ?? new DataTable();
         }
 
+        public async Task<DataTable> FindAll()
+        {
+            const string sql = @"
+                SELECT restock_id, shipping_method, carbon_amount, timestamp
+                FROM supplier_transport_carbon
+                ORDER BY timestamp DESC, restock_id ASC;";
+
+            var ds = new DataSet();
+
+            await using var conn = new NpgsqlConnection(_connString);
+            await conn.OpenAsync();
+
+            await using var cmd = new NpgsqlCommand(sql, conn);
+
+            using var adapter = new NpgsqlDataAdapter(cmd);
+            adapter.Fill(ds, "supplier_transport_carbon");
+
+            return ds.Tables["supplier_transport_carbon"] ?? new DataTable();
+        }
+
         public async Task DeleteBy(string restockID)
         {
             const string sql = @"

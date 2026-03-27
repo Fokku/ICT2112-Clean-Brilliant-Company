@@ -5,6 +5,7 @@ namespace CleanBrilliant.Domain.BoundaryInterface
     {
         Task Insert(string restockID, float distanceCarbon, float timeStamp);
         Task<DataTable> FindBy(string restockID);
+        Task<DataTable> FindAll();
         Task DeleteBy(string restockID);
     }
 }

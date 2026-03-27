@@ -248,5 +248,94 @@ namespace CleanBrilliant.Domain.Control
                 await _shippingMethodGateway.UpdateShippingMethod(orderID, shippingMethod);
             }
         }
+
+        public async Task<IReadOnlyList<object>> GetDistanceCarbonLogs()
+        {
+            var records = new List<(string ReferenceId, string Type, string Method, float Carbon, float? Timestamp)>();
+
+            var customerTable = await _customerTransportCarbonGateway.FindAll();
+            foreach (DataRow row in customerTable.Rows)
+            {
+                records.Add((
+                    Convert.ToString(row["order_id"]) ?? string.Empty,
+                    "customer",
+                    row.Table.Columns.Contains("shipping_method") && row["shipping_method"] != DBNull.Value
+                        ? Convert.ToString(row["shipping_method"]) ?? "Unknown"
+                        : "Unknown",
+                    Convert.ToSingle(row["carbon_amount"]),
+                    row["timestamp"] == DBNull.Value ? null : Convert.ToSingle(row["timestamp"])));
+            }
+
+            var supplierTable = await _supplierTransportCarbonGateway.FindAll();
+            foreach (DataRow row in supplierTable.Rows)
+            {
+                records.Add((
+                    Convert.ToString(row["restock_id"]) ?? string.Empty,
+                    "supplier",
+                    row.Table.Columns.Contains("shipping_method") && row["shipping_method"] != DBNull.Value
+                        ? Convert.ToString(row["shipping_method"]) ?? "truck"
+                        : "truck",
+                    Convert.ToSingle(row["carbon_amount"]),
+                    row["timestamp"] == DBNull.Value ? null : Convert.ToSingle(row["timestamp"])));
+            }
+
+            return records
+                .OrderByDescending(record => record.Timestamp ?? float.MinValue)
+                .Select(record => (object)new
+                {
+                    referenceId = record.ReferenceId,
+                    recordType = record.Type,
+                    shippingMethod = record.Method,
+                    carbonAmount = record.Carbon,
+                    timestamp = record.Timestamp
+                })
+                .ToList();
+        }
+
+        public async Task<IReadOnlyList<object>> GetRouteLogs()
+        {
+            var records = new List<(string ReferenceId, string RecordType, string RouteDistId, float? DistanceKm, float? DurationMin, float? Timestamp)>();
+
+            var outboundTable = await _outboundDistributionGateway.FindAll();
+            foreach (DataRow row in outboundTable.Rows)
+            {
+                records.Add((
+                    Convert.ToString(row["order_id"]) ?? string.Empty,
+                    "outbound",
+                    row.Table.Columns.Contains("customer_route_dist_id") && row["customer_route_dist_id"] != DBNull.Value
+                        ? Convert.ToString(row["customer_route_dist_id"]) ?? string.Empty
+                        : string.Empty,
+                    row["distance_km"] == DBNull.Value ? (float?)null : Convert.ToSingle(row["distance_km"]),
+                    row["duration_min"] == DBNull.Value ? (float?)null : Convert.ToSingle(row["duration_min"]),
+                    row["timestamp"] == DBNull.Value ? (float?)null : Convert.ToSingle(row["timestamp"])));
+            }
+
+            var inboundTable = await _inboundLogisticsGateway.FindAll();
+            foreach (DataRow row in inboundTable.Rows)
+            {
+                records.Add((
+                    Convert.ToString(row["restock_id"]) ?? string.Empty,
+                    "inbound",
+                    row.Table.Columns.Contains("supplier_route_dist_id") && row["supplier_route_dist_id"] != DBNull.Value
+                        ? Convert.ToString(row["supplier_route_dist_id"]) ?? string.Empty
+                        : string.Empty,
+                    row["distance_km"] == DBNull.Value ? (float?)null : Convert.ToSingle(row["distance_km"]),
+                    row["duration_min"] == DBNull.Value ? (float?)null : Convert.ToSingle(row["duration_min"]),
+                    row["timestamp"] == DBNull.Value ? (float?)null : Convert.ToSingle(row["timestamp"])));
+            }
+
+            return records
+                .OrderByDescending(record => record.Timestamp ?? float.MinValue)
+                .Select(record => (object)new
+                {
+                    referenceId = record.ReferenceId,
+                    recordType = record.RecordType,
+                    routeDistId = record.RouteDistId,
+                    distanceKm = record.DistanceKm,
+                    durationMin = record.DurationMin,
+                    timestamp = record.Timestamp
+                })
+                .ToList();
+        }
     }
 }

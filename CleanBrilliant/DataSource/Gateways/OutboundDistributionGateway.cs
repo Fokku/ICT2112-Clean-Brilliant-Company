@@ -56,6 +56,26 @@ namespace CleanBrilliant.Data.Gateways
             return ds.Tables["outbound_distribution"] ?? new DataTable();
         }
 
+        public async Task<DataTable> FindAll()
+        {
+            const string sql = @"
+                SELECT order_id, customer_route_dist_id, distance_km, duration_min, timestamp
+                FROM outbound_distribution
+                ORDER BY timestamp DESC, order_id ASC;";
+
+            var ds = new DataSet();
+
+            await using var conn = new NpgsqlConnection(_connString);
+            await conn.OpenAsync();
+
+            await using var cmd = new NpgsqlCommand(sql, conn);
+
+            using var adapter = new NpgsqlDataAdapter(cmd);
+            adapter.Fill(ds, "outbound_distribution");
+
+            return ds.Tables["outbound_distribution"] ?? new DataTable();
+        }
+
         public async Task DeleteBy(string orderID)
         {
             const string sql = @"

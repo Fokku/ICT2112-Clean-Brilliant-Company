@@ -7,63 +7,59 @@
     <p class="text-muted mb-4">Overview of your organisation's carbon emissions</p>
 
     <div class="row g-3">
-        <!-- Employees Card -->
         <div class="col-md-6">
             <a href="/Carbon/Employees" class="text-decoration-none">
                 <div class="card h-100" style="cursor:pointer;">
                     <div class="card-body">
                         <div class="d-flex justify-content-between align-items-center mb-2">
                             <span class="text-uppercase text-muted fw-semibold" style="font-size:.82rem;letter-spacing:.5px;">Employees</span>
-                            <span class="badge text-bg-primary"><span id="employee-count">—</span> <span id="employee-label">employees</span></span>
+                            <span class="badge text-bg-primary"><span id="employee-count">-</span> <span id="employee-label">employees</span></span>
                         </div>
                         <div class="text-muted" style="font-size:.9rem;">Manage staff commute carbon tracking</div>
-                        <div class="mt-3" style="color:var(--cbc-brand);font-size:.85rem;">View details →</div>
+                        <div class="mt-3" style="color:var(--cbc-brand);font-size:.85rem;">View details -></div>
                     </div>
                 </div>
             </a>
         </div>
 
-        <!-- Buildings Card -->
         <div class="col-md-6">
             <a href="/Carbon/Buildings" class="text-decoration-none">
                 <div class="card h-100" style="cursor:pointer;">
                     <div class="card-body">
                         <div class="d-flex justify-content-between align-items-center mb-2">
                             <span class="text-uppercase text-muted fw-semibold" style="font-size:.82rem;letter-spacing:.5px;">Buildings</span>
-                            <span class="badge text-bg-success"><span id="building-count">—</span> <span id="building-label">facilities</span></span>
+                            <span class="badge text-bg-success"><span id="building-count">-</span> <span id="building-label">facilities</span></span>
                         </div>
                         <div class="text-muted" style="font-size:.9rem;">Track facility energy and gas emissions</div>
-                        <div class="mt-3" style="color:var(--cbc-brand);font-size:.85rem;">View details →</div>
+                        <div class="mt-3" style="color:var(--cbc-brand);font-size:.85rem;">View details -></div>
                     </div>
                 </div>
             </a>
         </div>
 
-        <!-- Shipping Carbon Card -->
         <div class="col-md-6">
-            <a href="/Carbon/Shipping" class="text-decoration-none">
+            <a href="/Carbon/ShippingDistanceCarbon" class="text-decoration-none">
                 <div class="card h-100" style="cursor:pointer;">
                     <div class="card-body">
                         <div class="d-flex justify-content-between align-items-center mb-2">
-                            <span class="text-uppercase text-muted fw-semibold" style="font-size:.82rem;letter-spacing:.5px;">Shipping Carbon</span>
+                            <span class="text-uppercase text-muted fw-semibold" style="font-size:.82rem;letter-spacing:.5px;">Shipping Distance Carbon</span>
                         </div>
-                        <div class="text-muted" style="font-size:.9rem;">Look up carbon emissions for customer orders and supplier restocks</div>
-                        <div class="mt-3" style="color:var(--cbc-brand);font-size:.85rem;">Look up →</div>
+                        <div class="text-muted" style="font-size:.9rem;">Look up and test transport distance carbon for customer orders and supplier restocks.</div>
+                        <div class="mt-3" style="color:var(--cbc-brand);font-size:.85rem;">Open distance carbon -></div>
                     </div>
                 </div>
             </a>
         </div>
 
-        <!-- Analysis Card -->
         <div class="col-md-6">
-            <a href="/Carbon/Analysis" class="text-decoration-none">
+            <a href="/Carbon/CarbonDataAggregation" class="text-decoration-none">
                 <div class="card h-100" style="cursor:pointer;">
                     <div class="card-body">
                         <div class="d-flex justify-content-between align-items-center mb-2">
-                            <span class="text-uppercase text-muted fw-semibold" style="font-size:.82rem;letter-spacing:.5px;">Analysis</span>
+                            <span class="text-uppercase text-muted fw-semibold" style="font-size:.82rem;letter-spacing:.5px;">Carbon Data Aggregation</span>
                         </div>
-                        <div class="text-muted" style="font-size:.9rem;">Get shipping recommendations and carbon level analysis</div>
-                        <div class="mt-3" style="color:var(--cbc-brand);font-size:.85rem;">Analyze →</div>
+                        <div class="text-muted" style="font-size:.9rem;">View total carbon summaries, manual aggregation tests, and total carbon logs.</div>
+                        <div class="mt-3" style="color:var(--cbc-brand);font-size:.85rem;">Open aggregation -></div>
                     </div>
                 </div>
             </a>
@@ -72,6 +68,20 @@
 
     <div class="row g-3 mt-1">
         <div class="col-md-6">
+            <a href="/Carbon/Analysis" class="text-decoration-none">
+                <div class="card h-100" style="cursor:pointer;">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <span class="text-uppercase text-muted fw-semibold" style="font-size:.82rem;letter-spacing:.5px;">Analysis</span>
+                        </div>
+                        <div class="text-muted" style="font-size:.9rem;">Get shipping recommendations and carbon level analysis.</div>
+                        <div class="mt-3" style="color:var(--cbc-brand);font-size:.85rem;">Analyze -></div>
+                    </div>
+                </div>
+            </a>
+        </div>
+
+        <div class="col-md-6">
             <a href="/Carbon/RouteSummary" class="text-decoration-none">
                 <div class="card h-100" style="cursor:pointer;">
                     <div class="card-body">
@@ -79,12 +89,14 @@
                             <span class="text-uppercase text-muted fw-semibold" style="font-size:.82rem;letter-spacing:.5px;">Route Summary</span>
                         </div>
                         <div class="text-muted" style="font-size:.9rem;">Search inbound and outbound distance logs by order ID or restock ID.</div>
-                        <div class="mt-3" style="color:var(--cbc-brand);font-size:.85rem;">View summary â†’</div>
+                        <div class="mt-3" style="color:var(--cbc-brand);font-size:.85rem;">View summary -></div>
                     </div>
                 </div>
             </a>
         </div>
+    </div>
 
+    <div class="row g-3 mt-1">
         <div class="col-md-6">
             <a href="/Carbon/RouteCalculation" class="text-decoration-none">
                 <div class="card h-100" style="cursor:pointer;">
@@ -93,7 +105,7 @@
                             <span class="text-uppercase text-muted fw-semibold" style="font-size:.82rem;letter-spacing:.5px;">Route Calculation</span>
                         </div>
                         <div class="text-muted" style="font-size:.9rem;">Calculate the distance from a customer postal code to a selected hub from the supplier table.</div>
-                        <div class="mt-3" style="color:var(--cbc-brand);font-size:.85rem;">View route →</div>
+                        <div class="mt-3" style="color:var(--cbc-brand);font-size:.85rem;">View route -></div>
                     </div>
                 </div>
             </a>
