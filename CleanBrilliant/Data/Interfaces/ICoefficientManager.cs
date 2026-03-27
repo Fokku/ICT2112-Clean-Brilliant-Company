@@ -1,11 +1,13 @@
-using System.Collections.Generic;
+using CleanBrilliant.Models;
 
-namespace CleanBrilliant.Services
+namespace CleanBrilliant.Interfaces
 {
     public interface ICoefficientManager
     {
-        List<EmissionSource> getAll();
-        float getEmission(string name);
-        void updateEmission(string name, float emission);
+
+        public float getEmission(string name);
+
+        public void updateEmission(string name, float emission);
+
     }
 }

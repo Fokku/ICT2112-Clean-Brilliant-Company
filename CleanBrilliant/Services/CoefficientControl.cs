@@ -24,6 +24,7 @@ namespace CleanBrilliant.Services
             return coefficients;
         }
 
+
         public float getEmission(string name)
         {
             var source = coefficients.FirstOrDefault(c => c.GetName() == name);
@@ -34,6 +35,7 @@ namespace CleanBrilliant.Services
             return source.getEmission();
         }
 
+  
         public void updateEmission(string name, float emission)
         {
             if (emission < 0)

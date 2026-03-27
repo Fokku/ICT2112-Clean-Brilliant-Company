@@ -41,7 +41,25 @@ namespace CleanBrilliant.Services
         // Matches IProductDetailReader
         public ProductDetail GetProductDetail(int productId)
         {
-            return _gateway.GetByIdAsync(productId).Result;
+            // 1. Fetch the raw RecordSet from the Gateway
+            var recordSet = _gateway.GetByIdAsync(productId).Result;
+
+            // 2. If no data came back, return null
+            if (!recordSet.HasRows)
+            {
+                return null;
+            }
+
+            // 3. Extract the first row and map it to a new ProductDetail object
+            var row = recordSet.Rows[0];
+            return new ProductDetail
+            {
+                ProductID = Convert.ToInt32(row["product_id"]),
+                Carbon = Convert.ToSingle(row["carbon"]),
+                EcoFriendly = Convert.ToBoolean(row["eco_friendly"]),
+                ToxicPercentage = Convert.ToSingle(row["toxic_percentage"]),
+                CalculationDate = Convert.ToDateTime(row["calculation_date"])
+            };
         }
 
         // Matches IProductDetailReader

@@ -1,3 +1,4 @@
+using CleanBrilliant.Data; // Added to access UnitOfWork
 using CleanBrilliant.Data.Gateways;
 using CleanBrilliant.Interfaces;
 using CleanBrilliant.Services;
@@ -15,32 +16,39 @@ builder.Services.AddDbContext<AppDbContext>(options =>
         builder.Configuration.GetConnectionString("DefaultConnection")
     ));
 
+// --- Core Data Services ---
+builder.Services.AddScoped<UnitOfWork>(); // 1. FIX: Registered UnitOfWork
+
 // --- Database Gateways ---
-builder.Services.AddScoped<IDashboardLayoutGateway, DashboardLayoutGateway>();
 builder.Services.AddScoped<PreShipmentGateway>();
+builder.Services.AddScoped<DashboardLayoutGateway>(); // 2. FIX: Registered DashboardLayoutGateway
+builder.Services.AddScoped<ProductDetailGateway>();
 
 // --- Strategies ---
 builder.Services.AddScoped<ICarbonFootprintStrategy, ProductCF>();
 
 // --- Services & Controls ---
-builder.Services.AddScoped<DashboardLayoutSerializer>();
+// Dashboard Layout
 builder.Services.AddScoped<DashboardLayoutControl>();
+builder.Services.AddScoped<ILayoutWidgetManager>(provider => provider.GetRequiredService<DashboardLayoutControl>());
+
+// Widgets
 builder.Services.AddScoped<IWidgetBuilder, WidgetBuilder>();
 builder.Services.AddScoped<WidgetControl>();
+builder.Services.AddScoped<IWidgetManager>(provider => provider.GetRequiredService<WidgetControl>());
+
+// Carbon & Analytics
 builder.Services.AddSingleton<CoefficientControl>();
-
-builder.Services.AddScoped<IProductDetailReader, ProductCalculator>();
-
-// Register Calculator for both Interfaces to ensure singleton-per-request behavior
-builder.Services.AddScoped<IPreShipmentCarbonReader, PreShipmentCarbonCalculator>();
-builder.Services.AddScoped<IPreShipmentCarbonWriter, PreShipmentCarbonCalculator>();
-
-// Register Analytics
 builder.Services.AddScoped<IAggregatedData, Co2AnalyticsControl>();
-builder.Services.AddScoped<ProductDetailGateway>();
-// Register the Calculator under its Interfaces (Business Logic)
-builder.Services.AddScoped<IProductDetailWriter, ProductCalculator>();
-builder.Services.AddScoped<IProductDetailReader,ProductCalculator>();
+
+// Calculators (Registered concretely, then mapped to interfaces to share instances cleanly)
+builder.Services.AddScoped<ProductCalculator>();
+builder.Services.AddScoped<IProductDetailWriter>(provider => provider.GetRequiredService<ProductCalculator>());
+builder.Services.AddScoped<IProductDetailReader>(provider => provider.GetRequiredService<ProductCalculator>());
+
+builder.Services.AddScoped<PreShipmentCarbonCalculator>();
+builder.Services.AddScoped<IPreShipmentCarbonReader>(provider => provider.GetRequiredService<PreShipmentCarbonCalculator>());
+builder.Services.AddScoped<IPreShipmentCarbonWriter>(provider => provider.GetRequiredService<PreShipmentCarbonCalculator>());
 
 // Add services to the container.
 builder.Services.AddControllersWithViews();

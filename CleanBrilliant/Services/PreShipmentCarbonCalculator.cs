@@ -1,4 +1,6 @@
-using System.Data;
+using System;
+using System.Collections.Generic;
+using CleanBrilliant.Data; // Added to access RecordSet
 using CleanBrilliant.Data.Interfaces;
 using CleanBrilliant.Data.Gateways;
 using CleanBrilliant.DTO;
@@ -12,10 +14,9 @@ namespace CleanBrilliant.Services
     {
         private ICarbonFootprintStrategy _strategy;
         private readonly PreShipmentGateway _gateway;
-        private readonly IProductDetailReader _productReader; // 1. Add the interface
+        private readonly IProductDetailReader _productReader; 
         private const string TableName = "pre_shipment_carbon_data"; 
 
-        // 2. Inject it into the constructor
         public PreShipmentCarbonCalculator(PreShipmentGateway gateway, IProductDetailReader productReader)
         {
             _strategy = new ProductCF();
@@ -30,13 +31,13 @@ namespace CleanBrilliant.Services
 
         public float CalculateCarbon(PreShipmentDetailDTO dto)
         {
-            // 3. Intercept the ProductCF calculation to use the Database Reader
+            // Intercept the ProductCF calculation to use the Database Reader
             if (_strategy is ProductCF)
             {
                 float totalProductCarbon = 0f;
                 foreach (var item in dto.ProductOrderDetailList)
                 {
-                    // Fetch the saved calculation from the Toxic Analyzer module!
+                    // Fetch the saved calculation from the Toxic Analyzer module
                     var detail = _productReader.GetProductDetail(item.ProductID);
                     if (detail != null)
                     {
@@ -78,12 +79,14 @@ namespace CleanBrilliant.Services
 
         public PreShipmentCarbonDataDTO? GetPreShipmentCarbonData(int orderId)
         {
-            DataTable recordSet = _gateway.FindByOrder(TableName, orderId);
+            // Swapped DataTable for our custom RecordSet
+            RecordSet recordSet = _gateway.FindByOrder(TableName, orderId);
             
-            if (recordSet.Rows.Count == 0)
+            // Using the custom HasRows property we built earlier
+            if (!recordSet.HasRows)
                 return null;
 
-            DataRow row = recordSet.Rows[0];
+            var row = recordSet.Rows[0];
             return new PreShipmentCarbonDataDTO
             {
                 OrderId = Convert.ToInt32(row["order_id"]),
@@ -99,10 +102,12 @@ namespace CleanBrilliant.Services
             var startDateTime = startDate.ToDateTime(TimeOnly.MinValue);
             var endDateTime = endDate.ToDateTime(TimeOnly.MaxValue);
 
-            DataTable recordSet = _gateway.FindByDateRange(TableName, startDateTime, endDateTime);
+            // Swapped DataTable for our custom RecordSet
+            RecordSet recordSet = _gateway.FindByDateRange(TableName, startDateTime, endDateTime);
             var results = new List<PreShipmentCarbonDataDTO>();
 
-            foreach (DataRow row in recordSet.Rows)
+            // Iterating through the RecordSet's list of dictionaries
+            foreach (var row in recordSet.Rows)
             {
                 results.Add(new PreShipmentCarbonDataDTO
                 {
