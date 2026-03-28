@@ -14,8 +14,8 @@ namespace CleanBrilliant.Services
     {
         private ICarbonFootprintStrategy _strategy;
         private readonly PreShipmentGateway _gateway;
-        private readonly IProductDetailReader _productReader; 
-        private const string TableName = "pre_shipment_carbon_data"; 
+        private readonly IProductDetailReader _productReader;
+        private const string TableName = "pre_shipment_carbon_data";
 
         public PreShipmentCarbonCalculator(PreShipmentGateway gateway, IProductDetailReader productReader)
         {
@@ -31,21 +31,7 @@ namespace CleanBrilliant.Services
 
         public float CalculateCarbon(PreShipmentDetailDTO dto)
         {
-            // Intercept the ProductCF calculation to use the Database Reader
-            if (_strategy is ProductCF)
-            {
-                float totalProductCarbon = 0f;
-                foreach (var item in dto.ProductOrderDetailList)
-                {
-                    // Fetch the saved calculation from the Toxic Analyzer module
-                    var detail = _productReader.GetProductDetail(item.ProductID);
-                    if (detail != null)
-                    {
-                        totalProductCarbon += detail.Carbon * item.Quantity;
-                    }
-                }
-                return totalProductCarbon;
-            }
+          
 
             // For PackagingCF and StorageCF, fall back to the normal strategy math
             return _strategy.CalculateCarbon(dto);
@@ -53,6 +39,8 @@ namespace CleanBrilliant.Services
 
         public PreShipmentCarbonDataDTO CalculateAll(PreShipmentDetailDTO dto)
         {
+            dto.ProductReader = _productReader;
+
             var result = new PreShipmentCarbonDataDTO
             {
                 OrderId = dto.OrderId,
@@ -60,13 +48,13 @@ namespace CleanBrilliant.Services
             };
 
             SetStrategy(new ProductCF());
-            result.ProductCF = CalculateCarbon(dto);
+            result.ProductCF = _strategy.CalculateCarbon(dto);
 
             SetStrategy(new PackagingCF());
-            result.PackagingCF = CalculateCarbon(dto);
+            result.PackagingCF = _strategy.CalculateCarbon(dto);
 
             SetStrategy(new StorageCF());
-            result.StorageCF = CalculateCarbon(dto);
+            result.StorageCF = _strategy.CalculateCarbon(dto);
 
             return result;
         }
@@ -81,7 +69,7 @@ namespace CleanBrilliant.Services
         {
             // Swapped DataTable for our custom RecordSet
             RecordSet recordSet = _gateway.FindByOrder(TableName, orderId);
-            
+
             // Using the custom HasRows property we built earlier
             if (!recordSet.HasRows)
                 return null;

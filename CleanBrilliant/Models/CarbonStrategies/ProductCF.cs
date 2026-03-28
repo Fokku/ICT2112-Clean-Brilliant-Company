@@ -5,20 +5,23 @@ namespace CleanBrilliant.Models.CarbonStrategies
 {
     public class ProductCF : ICarbonFootprintStrategy
     {
-        private const float EmissionPerUnit = 0.5f; // Constant value representing carbon emissions per unit of product
-
+        
         public float CalculateCarbon(PreShipmentDetailDTO dto)
         {
-            if (dto == null || dto.ProductOrderDetailList == null)
-                return 0f;
+            if (dto?.ProductOrderDetailList == null) return 0f;
 
             float total = 0f;
-
             foreach (var item in dto.ProductOrderDetailList)
             {
-                total += item.Quantity * EmissionPerUnit;
-            }
+                // Use the reader inside the DTO
+                var detail = dto.ProductReader?.GetProductDetail(item.ProductID);
 
+                if (detail != null)
+                {
+                    total += detail.Carbon * item.Quantity;
+                }
+              
+            }
             return total;
         }
     }
