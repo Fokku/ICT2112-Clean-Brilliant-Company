@@ -78,10 +78,5 @@ namespace CleanBrilliant.Controllers
             return RedirectToAction(nameof(RouteCalculation));
         }
 
-        [HttpGet("Dashboard")]
-        public IActionResult Dashboard()
-        {
-            return View();
-        }
     }
 }

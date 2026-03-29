@@ -21,17 +21,12 @@ builder.Services.AddDbContext<AppDbContext>(options =>
     ));
 
 // --- Database Gateways ---
-builder.Services.AddScoped<IDashboardLayoutGateway, DashboardLayoutGateway>();
 builder.Services.AddScoped<PreShipmentGateway>();
 
 // --- Strategies ---
 builder.Services.AddScoped<ICarbonFootprintStrategy, ProductCF>();
 
 // --- Services & Controls ---
-builder.Services.AddScoped<DashboardLayoutSerializer>();
-builder.Services.AddScoped<DashboardLayoutControl>();
-builder.Services.AddScoped<IWidgetBuilder, WidgetBuilder>();
-builder.Services.AddScoped<WidgetControl>();
 builder.Services.AddSingleton<CoefficientControl>();
 builder.Services.AddSingleton<CleanBrilliant.Services.ICoefficientManager>(sp => sp.GetRequiredService<CoefficientControl>());
 
@@ -43,8 +38,6 @@ builder.Services.AddScoped<CleanBrilliant.Data.Interfaces.IPreShipmentCarbonRead
 builder.Services.AddScoped<IPreShipmentCarbonWriter>(sp => sp.GetRequiredService<PreShipmentCarbonCalculator>());
 builder.Services.AddScoped<IPreShipmentCarbonReader>(sp => sp.GetRequiredService<PreShipmentCarbonCalculator>());
 
-// Register Analytics
-builder.Services.AddScoped<IAggregatedData, Co2AnalyticsControl>();
 builder.Services.AddScoped<ProductDetailGateway>();
 // Register the Calculator under its Interfaces (Business Logic)
 builder.Services.AddScoped<IProductDetailWriter, ProductCalculator>();
@@ -123,11 +116,5 @@ app.MapControllerRoute(
     name: "default",
     pattern: "{controller=Home}/{action=Index}/{id?}")
     .WithStaticAssets();
-
-await using (var scope = app.Services.CreateAsyncScope())
-{
-    var dashboardLayoutControl = scope.ServiceProvider.GetRequiredService<DashboardLayoutControl>();
-    await dashboardLayoutControl.EnsureDefaultLayoutExists();
-}
 
 app.Run();
